@@ -2,8 +2,16 @@
 name = "moon_extension_dlu"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 publish = false
+
+[lib]
+crate-type = ['cdylib']
 
 [dependencies]
 extism-pdk = { workspace = true }
 moon_pdk = { workspace = true }
+starbase_archive = { version = "0.2.5", default-features = false, features = [
+	"tar-gz",
+	"zip",
+] }

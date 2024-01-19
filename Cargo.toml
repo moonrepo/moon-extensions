@@ -5,3 +5,10 @@ members = ["crates/*"]
 [workspace.dependencies]
 moon_pdk = { path = "../moon/nextgen/pdk" }
 extism-pdk = "1.0.0"
+
+[profile.release]
+codegen-units = 1
+debug = false
+lto = true
+opt-level = "s"
+panic = "abort"
