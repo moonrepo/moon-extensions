@@ -9,8 +9,8 @@ extern "ExtismHost" {
     fn to_virtual_path(path: String) -> String;
 }
 
-#[derive(Args, Debug)]
-pub struct ExecuteArgs {
+#[derive(Args)]
+pub struct ExecuteExtensionArgs {
     #[arg(long, short = 'i', required = true)]
     pub input: String,
 
@@ -23,14 +23,14 @@ pub struct ExecuteArgs {
 
 #[plugin_fn]
 pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<()> {
-    let args = parse_args::<ExecuteArgs>(&input.args)?;
+    let args = parse_args::<ExecuteExtensionArgs>(&input.args)?;
 
     // Determine the correct input. If the input is a URL, attempt to download
     // the file, otherwise use the file directly (if within our whitelist).
     let input_file = if args.input.starts_with("http") {
         debug!("Received a URL as the input source");
 
-        download_from_url(&args.input, virtual_path!("/moon/temp"))?
+        download_from_url(&args.input, virtual_path!("/moon/temp"), None)?
     } else {
         debug!(
             "Converting input <file>{}</file> to an absolute virtual path",
