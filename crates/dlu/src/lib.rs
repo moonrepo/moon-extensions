@@ -1,8 +1,8 @@
 use extism_pdk::*;
-use moon_pdk::{anyhow, args::*, extension::*, fetch_url_bytes, plugin_err, virtual_path};
+use moon_extension_common::download::download_from_url;
+use moon_pdk::{anyhow, args::*, extension::*, plugin_err, virtual_path, VirtualPath};
 use starbase_archive::Archiver;
 use std::fs;
-use std::path::PathBuf;
 
 #[host_fn]
 extern "ExtismHost" {
@@ -28,30 +28,9 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     // Determine the correct input. If the input is a URL, attempt to download
     // the file, otherwise use the file directly (if within our whitelist).
     let input_file = if args.input.starts_with("http") {
-        debug!(
-            "Received a URL as the input, attempting to download from <url>{}</url>",
-            args.input
-        );
+        debug!("Received a URL as the input source");
 
-        // Extract the file name from the URL
-        let last_sep = args.input.rfind('/').unwrap();
-        let file_name = &args.input[last_sep + 1..];
-
-        // Fetch the bytes of the URL
-        let bytes = fetch_url_bytes(&args.input)?;
-
-        // Write the file to the temp directory
-        let temp_dir = PathBuf::from("/moon/temp");
-
-        fs::create_dir_all(&temp_dir)?;
-
-        let temp_file = temp_dir.join(&file_name);
-
-        fs::write(&temp_file, bytes)?;
-
-        debug!("Downloaded to <path>{}</path>", temp_file.display());
-
-        temp_file
+        download_from_url(&args.input, virtual_path!("/moon/temp"))?
     } else {
         debug!(
             "Converting input <file>{}</file> to an absolute virtual path",
@@ -66,18 +45,21 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
         .is_some_and(|ext| ext == "tar" || ext == "tgz" || ext == "gz" || ext == "zip")
     {
         return Err(plugin_err!(
-            "Invalid input, only <file>tar</file> and <file>zip</file> archives are supported."
+            "Invalid input, only <file>tar (gz)</file> and <file>zip</file> archives are supported."
         ));
     }
 
     if !input_file.exists() || !input_file.is_file() {
-        // return err!(
-        //     "Input <path>{}</path> must be a valid file.",
-        //     input_file.display(),
-        // );
+        return Err(plugin_err!(
+            "Input <path>{}</path> must be a valid file.",
+            input_file.display(),
+        ));
     }
 
-    info!("Opening archive <path>{}</path>", input_file.display());
+    info!(
+        "Opening archive <path>{}</path>",
+        input_file.real_path().display()
+    );
 
     // Convert the provided output into a virtual file path.
     let output_dir = virtual_path!(buf, input.context.get_absolute_path(args.output));
@@ -85,7 +67,7 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     if output_dir.exists() && output_dir.is_file() {
         return Err(plugin_err!(
             "Output <path>{}</path> must be a directory, found a file.",
-            output_dir.display(),
+            output_dir.real_path().display(),
         ));
     }
 
@@ -97,7 +79,10 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
 
     fs::create_dir_all(&output_dir)?;
 
-    info!("Unpacking archive to <path>{}</path>", output_dir.display());
+    info!(
+        "Unpacking archive to <path>{}</path>",
+        output_dir.real_path().display()
+    );
 
     // Attempt to unpack the archive!
     let mut archive = Archiver::new(&output_dir, &input_file);
