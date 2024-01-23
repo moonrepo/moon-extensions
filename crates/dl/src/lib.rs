@@ -12,7 +12,7 @@ extern "ExtismHost" {
 }
 
 #[derive(Args)]
-pub struct ExecuteExtensionArgs {
+pub struct DlExtensionArgs {
     #[arg(long, required = true)]
     pub url: String,
 
@@ -25,7 +25,7 @@ pub struct ExecuteExtensionArgs {
 
 #[plugin_fn]
 pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<()> {
-    let args = parse_args::<ExecuteExtensionArgs>(&input.args)?;
+    let args = parse_args::<DlExtensionArgs>(&input.args)?;
 
     if !args.url.starts_with("http") {
         return Err(plugin_err!("A valid URL is required for downloading."));
