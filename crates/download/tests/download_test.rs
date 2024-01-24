@@ -2,7 +2,7 @@ use moon_pdk_test_utils::{create_extension, ExecuteExtensionInput};
 use starbase_sandbox::create_empty_sandbox;
 use std::fs;
 
-mod dl {
+mod download {
     use super::*;
 
     #[test]

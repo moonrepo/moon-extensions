@@ -14,7 +14,7 @@ extern "ExtismHost" {
 }
 
 #[derive(Args)]
-pub struct DluExtensionArgs {
+pub struct UnpackExtensionArgs {
     #[arg(long, short = 's', required = true)]
     pub src: String,
 
@@ -27,7 +27,7 @@ pub struct DluExtensionArgs {
 
 #[plugin_fn]
 pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<()> {
-    let args = parse_args::<DluExtensionArgs>(&input.args)?;
+    let args = parse_args::<UnpackExtensionArgs>(&input.args)?;
 
     // Determine the correct input. If the input is a URL, attempt to download
     // the file, otherwise use the file directly (if within our whitelist).
