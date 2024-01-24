@@ -13,10 +13,10 @@ extern "ExtismHost" {
 
 #[derive(Args)]
 pub struct DownloadExtensionArgs {
-    #[arg(long, required = true)]
+    #[arg(long, short = 'u', required = true)]
     pub url: String,
 
-    #[arg(long)]
+    #[arg(long, short = 'd')]
     pub dest: Option<String>,
 
     #[arg(long)]

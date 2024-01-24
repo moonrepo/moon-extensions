@@ -18,8 +18,8 @@ pub struct UnpackExtensionArgs {
     #[arg(long, short = 's', required = true)]
     pub src: String,
 
-    #[arg(long, short = 'd', required = true)]
-    pub dest: String,
+    #[arg(long, short = 'd')]
+    pub dest: Option<String>,
 
     #[arg(long)]
     pub prefix: Option<String>,
@@ -49,7 +49,7 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
         .is_some_and(|ext| ext == "tar" || ext == "tgz" || ext == "gz" || ext == "zip")
     {
         return Err(plugin_err!(
-            "Invalid source, only <file>tar (gz)</file> and <file>zip</file> archives are supported."
+            "Invalid source, only <file>.tar</file>, <file>.tar.gz</file>, and <file>.zip</file> archives are supported."
         ));
     }
 
@@ -67,18 +67,17 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     );
 
     // Convert the provided output into a virtual file path.
-    let dest_dir = virtual_path!(buf, input.context.get_absolute_path(args.dest));
+    let dest_dir = virtual_path!(
+        buf,
+        input
+            .context
+            .get_absolute_path(args.dest.as_deref().unwrap_or_default())
+    );
 
     if dest_dir.exists() && dest_dir.is_file() {
         return Err(plugin_err!(
             "Destination <path>{}</path> must be a directory, found a file.",
             dest_dir.real_path().display(),
-        ));
-    }
-
-    if src_file == dest_dir {
-        return Err(plugin_err!(
-            "Source and destination cannot point to the same location."
         ));
     }
 
@@ -102,9 +101,11 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     }
 
     // Unpack the files
-    archive
-        .unpack_from_ext()
-        .map_err(|error| anyhow!("{error}"))?;
+    if let Err(error) = archive.unpack_from_ext() {
+        host_log!(stdout, "{}", error.to_string());
+
+        return Err(plugin_err!("{error}"));
+    };
 
     host_log!(stdout, "Unpacked archive!");
 
