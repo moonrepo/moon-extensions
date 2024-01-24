@@ -1,0 +1,26 @@
+[package]
+name = "moon_extension_unpack"
+version = "0.0.1"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ['cdylib']
+
+[dependencies]
+moon_extension_common = { path = "../common" }
+extism-pdk = { workspace = true }
+moon_pdk = { workspace = true }
+starbase_archive = { version = "0.2.5", default-features = false, features = [
+	"tar-gz",
+	"zip",
+] }
+
+[dev-dependencies]
+moon_pdk_test_utils = { workspace = true }
+starbase_sandbox = { workspace = true }
+
+[features]
+default = ["wasm"]
+wasm = []
