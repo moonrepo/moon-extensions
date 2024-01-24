@@ -1,5 +1,5 @@
 [package]
-name = "moon_extension_download"
+name = "moon_download_extension"
 version = "0.0.1"
 edition = "2021"
 license = "MIT"
