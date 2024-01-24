@@ -20,3 +20,7 @@ starbase_archive = { version = "0.2.5", default-features = false, features = [
 [dev-dependencies]
 moon_pdk_test_utils = { workspace = true }
 starbase_sandbox = { workspace = true }
+
+[features]
+default = ["wasm"]
+wasm = []
