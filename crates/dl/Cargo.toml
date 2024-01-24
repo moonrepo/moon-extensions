@@ -12,3 +12,7 @@ crate-type = ['cdylib']
 moon_extension_common = { path = "../common" }
 extism-pdk = { workspace = true }
 moon_pdk = { workspace = true }
+
+[dev-dependencies]
+moon_pdk_test_utils = { workspace = true }
+starbase_sandbox = { workspace = true }
