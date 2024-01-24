@@ -3,8 +3,9 @@ resolver = "2"
 members = ["crates/*"]
 
 [workspace.dependencies]
-moon_pdk = { path = "../moon/nextgen/pdk" }
 extism-pdk = "1.0.0"
+moon_pdk = "0.0.1"
+moon_pdk_test_utils = "0.0.1"
 
 [profile.release]
 codegen-units = 1
