@@ -12,7 +12,7 @@ crate-type = ['cdylib']
 moon_extension_common = { path = "../common" }
 extism-pdk = { workspace = true }
 moon_pdk = { workspace = true }
-starbase_archive = { version = "0.2.5", default-features = false, features = [
+starbase_archive = { version = "0.4.0", default-features = false, features = [
 	"tar-gz",
 	"zip",
 ] }
