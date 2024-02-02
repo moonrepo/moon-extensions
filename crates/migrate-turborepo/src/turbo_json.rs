@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Deserialize)]
 #[serde(untagged, rename_all = "kebab-case")]
 pub enum TurboOutputMode {
     #[default]
@@ -12,7 +12,7 @@ pub enum TurboOutputMode {
     None,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TurboTask {
     pub cache: Option<bool>,
@@ -26,7 +26,7 @@ pub struct TurboTask {
     pub persistent: Option<bool>,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TurboJson {
     pub extends: Option<Vec<String>>,
