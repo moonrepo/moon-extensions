@@ -4,9 +4,14 @@ members = ["crates/*"]
 
 [workspace.dependencies]
 extism-pdk = "1.0.1"
+moon_common = "0.0.2"
 moon_config = "0.0.2"
 moon_pdk = "0.0.1"
 moon_pdk_test_utils = "0.0.1"
+moon_target = "0.0.1"
+rustc-hash = "1.1.0"
+serde = { version = "1.0.196", features = ["derive"] }
+starbase_utils = { version = "0.4.0", default-features = false }
 starbase_sandbox = "0.3.0"
 
 [profile.release]
