@@ -10,7 +10,7 @@ use moon_extension_common::{map_miette_error, project_graph::*};
 use moon_pdk::*;
 use moon_target::Target;
 use rustc_hash::FxHashMap;
-use starbase_utils::{fs, yaml};
+use starbase_utils::{fs, json, yaml};
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
@@ -20,7 +20,14 @@ extern "ExtismHost" {
     fn host_log(input: Json<HostLogInput>);
 }
 
+#[derive(Args)]
+pub struct MigrateTurborepoExtensionArgs {
+    #[arg(long, short = 'd')]
+    pub bun: bool,
+}
+
 struct TurboMigrator {
+    pub args: MigrateTurborepoExtensionArgs,
     pub global_config: PartialInheritedTasksConfig,
     pub global_config_path: VirtualPath,
     pub global_config_modified: bool,
@@ -31,9 +38,13 @@ struct TurboMigrator {
 }
 
 impl TurboMigrator {
-    pub fn new(context: &MoonContext) -> AnyResult<Self> {
+    pub fn new(args: MigrateTurborepoExtensionArgs, context: &MoonContext) -> AnyResult<Self> {
         // Load global config if it exists
-        let global_config_path = context.workspace_root.join(".moon/tasks/node.yml");
+        let global_config_path = context.workspace_root.join(if args.bun {
+            ".moon/tasks/bun.yml"
+        } else {
+            ".moon/tasks/node.yml"
+        });
         let global_config = if global_config_path.exists() {
             yaml::read_file(&global_config_path)?
         } else {
@@ -46,15 +57,20 @@ impl TurboMigrator {
         let project_graph: ProjectGraph = json::from_str(&project_graph_result.stdout)?;
 
         // Determine the package manager to run tasks with
-        let mut package_manager = "npm";
+        let mut package_manager = if args.bun { "bun" } else { "npm" };
 
-        if context.workspace_root.join("pnpm-lock.yaml").exists() {
-            package_manager = "pnpm";
-        } else if context.workspace_root.join("yarn.lock").exists() {
-            package_manager = "yarn";
+        if !args.bun {
+            if context.workspace_root.join("pnpm-lock.yaml").exists() {
+                package_manager = "pnpm";
+            } else if context.workspace_root.join("yarn.lock").exists() {
+                package_manager = "yarn";
+            } else if context.workspace_root.join("bun.lockb").exists() {
+                package_manager = "bun";
+            }
         }
 
         Ok(Self {
+            args,
             global_config,
             global_config_path,
             global_config_modified: false,
@@ -90,7 +106,7 @@ impl TurboMigrator {
             }
         }
 
-        Err(anyhow!("Unable to migrate task for package <id>{package_name}</id>. Has the project been configured in moon's workspace projects?"))
+        Err(anyhow!("Unable to migrate task for package <id>{package_name}</id>. Has the project been configured in <property>projects</property> in <file>.moon/workspace.yml</file>?"))
     }
 
     fn migrate_root_config(&mut self, mut turbo_json: TurboJson) -> AnyResult<()> {
@@ -352,7 +368,11 @@ impl TurboMigrator {
                                 LanguageType::JavaScript
                             },
                         ),
-                        platform: Some(PlatformType::Node),
+                        platform: Some(if self.args.bun {
+                            PlatformType::Bun
+                        } else {
+                            PlatformType::Node
+                        }),
                         ..PartialProjectConfig::default()
                     },
                 );
@@ -365,7 +385,8 @@ impl TurboMigrator {
 
 #[plugin_fn]
 pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<()> {
-    let mut migrator = TurboMigrator::new(&input.context)?;
+    let args = parse_args::<MigrateTurborepoExtensionArgs>(&input.args)?;
+    let mut migrator = TurboMigrator::new(args, &input.context)?;
 
     // Migrate the workspace root config first
     let root_config_path = migrator.workspace_root.join("turbo.json");
@@ -380,9 +401,7 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
                 .display()
         );
 
-        migrator.migrate_root_config(serde_json::from_slice(&fs::read_file_bytes(
-            &root_config_path,
-        )?)?)?;
+        migrator.migrate_root_config(json::read_file(&root_config_path)?)?;
 
         fs::remove(root_config_path)?;
     }
@@ -411,10 +430,8 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
                     .display()
             );
 
-            migrator.migrate_project_config(
-                &project_source,
-                serde_json::from_slice(&fs::read_file_bytes(&project_config_path)?)?,
-            )?;
+            migrator
+                .migrate_project_config(&project_source, json::read_file(&project_config_path)?)?;
 
             fs::remove(project_config_path)?;
         }

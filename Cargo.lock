@@ -1445,6 +1445,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "json-strip-comments"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3d129799327c8f80861e467c59b825ba24c277dba6ad0d71a141dc98f9e04ee"
+
+[[package]]
 name = "json_comments"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1692,9 +1698,8 @@ dependencies = [
  "moon_target",
  "rustc-hash",
  "serde",
- "serde_json",
  "starbase_sandbox",
- "starbase_utils 0.4.0",
+ "starbase_utils 0.4.2",
 ]
 
 [[package]]
@@ -2622,7 +2627,7 @@ dependencies = [
  "flate2",
  "rustc-hash",
  "starbase_styles 0.2.0",
- "starbase_utils 0.4.0",
+ "starbase_utils 0.4.2",
  "tar",
  "thiserror",
  "tracing",
@@ -2642,7 +2647,7 @@ dependencies = [
  "once_cell",
  "predicates",
  "pretty_assertions",
- "starbase_utils 0.4.0",
+ "starbase_utils 0.4.2",
 ]
 
 [[package]]
@@ -2691,15 +2696,17 @@ dependencies = [
 
 [[package]]
 name = "starbase_utils"
-version = "0.4.0"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0e1b2c8c987f315fc4a2fdf33f16cad77c0886cdcc2ffc65a5806eb4e1ab87f"
+checksum = "0f8f5278795a3a700dff9c6af197fb1c81d69f7b9e0d12dda5d2f4bea03766a3"
 dependencies = [
  "dirs 5.0.1",
+ "json-strip-comments",
  "once_cell",
  "regex",
  "relative-path",
  "serde",
+ "serde_json",
  "serde_yaml",
  "starbase_styles 0.2.0",
  "thiserror",

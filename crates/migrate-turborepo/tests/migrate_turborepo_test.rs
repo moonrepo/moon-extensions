@@ -44,6 +44,29 @@ mod migrate_turborepo {
     }
 
     #[test]
+    fn can_force_bun_instead_of_node() {
+        let sandbox = create_sandbox("monorepo");
+        let plugin = create_extension("test", sandbox.path());
+
+        plugin.execute_extension(ExecuteExtensionInput {
+            args: vec!["--bun".into()],
+            context: plugin.create_context(sandbox.path()),
+        });
+
+        assert!(!sandbox.path().join("turbo.json").exists());
+        assert!(!sandbox.path().join("client/turbo.json").exists());
+        assert!(!sandbox.path().join("server/turbo.json").exists());
+        assert!(!sandbox.path().join(".moon/tasks/node.yml").exists());
+        assert!(sandbox.path().join(".moon/tasks/bun.yml").exists());
+        assert!(sandbox.path().join("client/moon.yml").exists());
+        assert!(sandbox.path().join("server/moon.yml").exists());
+
+        assert_snapshot!(fs::read_to_string(sandbox.path().join(".moon/tasks/bun.yml")).unwrap());
+        assert_snapshot!(fs::read_to_string(sandbox.path().join("client/moon.yml")).unwrap());
+        assert_snapshot!(fs::read_to_string(sandbox.path().join("server/moon.yml")).unwrap());
+    }
+
+    #[test]
     fn converts_to_a_root_project() {
         let sandbox = create_sandbox("root-project");
         let plugin = create_extension("test", sandbox.path());
