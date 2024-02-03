@@ -1624,8 +1624,6 @@ dependencies = [
 [[package]]
 name = "moon_common"
 version = "0.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ea04e66bf164c50032a04c499e127503f598ed34036f62c60c532c35b792c1f"
 dependencies = [
  "miette",
  "once_cell",
@@ -1640,8 +1638,6 @@ dependencies = [
 [[package]]
 name = "moon_config"
 version = "0.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b52381885017ccb8b8fc1f479f9f1c05006473c188dc3d1f158be934a01fd4c"
 dependencies = [
  "miette",
  "moon_common",
@@ -1690,6 +1686,7 @@ dependencies = [
  "moon_target",
  "rustc-hash",
  "serde",
+ "serde_json",
  "starbase_sandbox",
  "starbase_utils 0.4.0",
 ]
@@ -1697,8 +1694,6 @@ dependencies = [
 [[package]]
 name = "moon_pdk"
 version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34194a25b96abe4e19d63424afdfbb9066008ec2d8e73bf6be5205ef9f38796f"
 dependencies = [
  "clap",
  "extism-pdk",
@@ -1710,8 +1705,6 @@ dependencies = [
 [[package]]
 name = "moon_pdk_api"
 version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "205c2cab395ed01dbdccc4c08129184e02e0dbf03d1d39f3275a0e0fc0d3d4e7"
 dependencies = [
  "serde",
  "warpgate_api",
@@ -1720,8 +1713,6 @@ dependencies = [
 [[package]]
 name = "moon_pdk_test_utils"
 version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fadf75bfbc29a4200090858b4008bed4b7998117451c4b883ce828288afbcf2d"
 dependencies = [
  "extism",
  "moon_pdk_api",
@@ -1733,8 +1724,6 @@ dependencies = [
 [[package]]
 name = "moon_target"
 version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b4b72af2d699ad732039b55322d0b7bd1a2072872186c733d9ed140dfe0ea02"
 dependencies = [
  "miette",
  "moon_common",
@@ -2693,12 +2682,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0e1b2c8c987f315fc4a2fdf33f16cad77c0886cdcc2ffc65a5806eb4e1ab87f"
 dependencies = [
  "dirs 5.0.1",
- "json_comments",
  "once_cell",
  "regex",
  "relative-path",
  "serde",
- "serde_json",
  "serde_yaml",
  "starbase_styles 0.2.0",
  "thiserror",
@@ -3201,9 +3188,9 @@ dependencies = [
 
 [[package]]
 name = "warpgate"
-version = "0.10.3"
+version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "521091333a5299f7834e706654301e5814d288659eb9733c7968d8e972b897f2"
+checksum = "b8b7164a23f2561bbfecb7a304ca83d0381742fd8aa02da2bebfbb623cce5f1d"
 dependencies = [
  "extism",
  "miette",
@@ -3211,6 +3198,7 @@ dependencies = [
  "once_map",
  "regex",
  "reqwest",
+ "rustc-hash",
  "serde",
  "serde_json",
  "sha2",

@@ -3,15 +3,15 @@ use crate::turbo_json::*;
 use extism_pdk::*;
 use moon_common::Id;
 use moon_config::{
-    FilePath, InputPath, OutputPath, PartialInheritedTasksConfig, PartialProjectConfig,
-    PartialTaskArgs, PartialTaskConfig, PartialTaskDependency, PartialTaskOptionsConfig,
-    PlatformType, PortablePath, TaskOptionEnvFile, TaskOutputStyle,
+    FilePath, InputPath, LanguageType, OutputPath, PartialInheritedTasksConfig,
+    PartialProjectConfig, PartialTaskArgs, PartialTaskConfig, PartialTaskDependency,
+    PartialTaskOptionsConfig, PlatformType, PortablePath, TaskOptionEnvFile, TaskOutputStyle,
 };
 use moon_extension_common::map_miette_error;
-use moon_pdk::{extension::*, *};
+use moon_pdk::*;
 use moon_target::Target;
 use rustc_hash::FxHashMap;
-use starbase_utils::{fs, glob, json, yaml};
+use starbase_utils::{fs, yaml};
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
@@ -19,13 +19,13 @@ use std::str::FromStr;
 extern "ExtismHost" {
     fn exec_command(input: Json<ExecCommandInput>) -> Json<ExecCommandOutput>;
     fn host_log(input: Json<HostLogInput>);
-    fn to_virtual_path(path: String) -> String;
 }
 
 struct TurboMigrator {
     pub global_config: PartialInheritedTasksConfig,
     pub global_config_path: VirtualPath,
     pub global_config_modified: bool,
+    pub package_manager: String,
     pub project_configs: FxHashMap<VirtualPath, PartialProjectConfig>,
     pub project_graph: ProjectGraph,
     pub workspace_root: VirtualPath,
@@ -42,21 +42,36 @@ impl TurboMigrator {
         };
 
         // Load project graph information first
-        let project_graph_result = exec_command!("moon", ["project-graph", "--json"]);
+        let project_graph_result =
+            exec_command!("moon", ["project-graph", "--json", "--log", "off"]);
         let project_graph: ProjectGraph = json::from_str(&project_graph_result.stdout)?;
+
+        // Determine the package manager to run tasks with
+        let mut package_manager = "npm";
+
+        if context.workspace_root.join("pnpm-lock.yaml").exists() {
+            package_manager = "pnpm";
+        } else if context.workspace_root.join("yarn.lock").exists() {
+            package_manager = "yarn";
+        }
 
         Ok(Self {
             global_config,
             global_config_path,
             global_config_modified: false,
+            package_manager: package_manager.to_owned(),
             project_configs: FxHashMap::default(),
             project_graph,
             workspace_root: context.workspace_root.clone(),
         })
     }
 
-    fn find_project_task_from_id(&self, id: &str) -> AnyResult<(&Project, String)> {
-        let mut parts = id.split('#');
+    fn create_id(&self, id: &str) -> AnyResult<Id> {
+        Ok(Id::new(id.replace(':', "."))?)
+    }
+
+    fn find_project_task_from_script(&self, script: &str) -> AnyResult<(&Project, String)> {
+        let mut parts = script.split('#');
         let package_name = parts.next().unwrap();
         let task_id = parts.next().unwrap();
         let project = self.find_project_in_graph(package_name)?;
@@ -79,9 +94,9 @@ impl TurboMigrator {
     }
 
     fn migrate_root_config(&mut self, mut turbo_json: TurboJson) -> AnyResult<()> {
-        if let Some(global_deps) = turbo_json.global_dependencies.take() {
-            let implicit_inputs = self.global_config.implicit_inputs.get_or_insert(vec![]);
+        let mut implicit_inputs = vec![];
 
+        if let Some(global_deps) = turbo_json.global_dependencies.take() {
             for dep in global_deps {
                 implicit_inputs.push(InputPath::from_str(&dep)?);
             }
@@ -90,8 +105,6 @@ impl TurboMigrator {
         }
 
         if let Some(global_dot_env) = turbo_json.global_dot_env.take() {
-            let implicit_inputs = self.global_config.implicit_inputs.get_or_insert(vec![]);
-
             for env_file in global_dot_env {
                 implicit_inputs.push(InputPath::from_str(&env_file)?);
             }
@@ -100,13 +113,18 @@ impl TurboMigrator {
         }
 
         if let Some(global_env) = turbo_json.global_env.take() {
-            let implicit_inputs = self.global_config.implicit_inputs.get_or_insert(vec![]);
-
             for env in global_env {
                 implicit_inputs.push(InputPath::EnvVar(env.to_owned()));
             }
 
             self.global_config_modified = true;
+        }
+
+        if !implicit_inputs.is_empty() {
+            self.global_config
+                .implicit_inputs
+                .get_or_insert(vec![])
+                .extend(implicit_inputs);
         }
 
         self.migrate_pipeline(turbo_json)?;
@@ -119,46 +137,60 @@ impl TurboMigrator {
     }
 
     fn migrate_pipeline(&mut self, turbo_json: TurboJson) -> AnyResult<()> {
-        for (id, task) in turbo_json.pipeline {
-            let task = self.migrate_task(task, &id)?;
-
+        // package.json script names to turbo tasks
+        for (script, task) in turbo_json.pipeline {
             // Root-level task
-            if let Some(task_id) = id.strip_prefix("//#") {
+            if let Some(root_script) = script.strip_prefix("//#") {
+                let task = self.migrate_task(task, root_script)?;
+                let task_id = self.create_id(root_script)?;
+
                 self.load_project_config("")?
                     .tasks
                     .get_or_insert(BTreeMap::default())
-                    .insert(Id::new(task_id)?, task);
+                    .insert(task_id, task);
             }
             // Project task
-            else if id.contains('#') {
-                let (package_source, task_id) = self
-                    .find_project_task_from_id(&id)
+            else if script.contains('#') {
+                let (package_source, script) = self
+                    .find_project_task_from_script(&script)
                     .map(|(p, i)| (p.source.to_owned(), i))?;
+
+                let task = self.migrate_task(task, &script)?;
+                let task_id = self.create_id(&script)?;
 
                 self.load_project_config(&package_source)?
                     .tasks
                     .get_or_insert(BTreeMap::default())
-                    .insert(Id::new(task_id)?, task);
+                    .insert(task_id, task);
             }
             // Global task
             else {
+                let task = self.migrate_task(task, &script)?;
+                let task_id = self.create_id(&script)?;
+
                 self.global_config_modified = true;
                 self.global_config
                     .tasks
                     .get_or_insert(BTreeMap::default())
-                    .insert(Id::new(id)?, task);
+                    .insert(task_id, task);
             }
         }
 
         Ok(())
     }
 
-    fn migrate_task(&self, turbo_task: TurboTask, task_id: &str) -> AnyResult<PartialTaskConfig> {
+    fn migrate_task(
+        &self,
+        turbo_task: TurboTask,
+        package_script: &str,
+    ) -> AnyResult<PartialTaskConfig> {
         let mut config = PartialTaskConfig::default();
         let mut inputs = vec![];
 
-        // TODO package script
-        config.command = Some(PartialTaskArgs::String(task_id.into()));
+        config.command = Some(PartialTaskArgs::String(format!(
+            "{} run {}",
+            self.package_manager, package_script
+        )));
 
         // Dependencies
         if let Some(depends_on) = &turbo_task.depends_on {
@@ -181,7 +213,8 @@ impl TurboMigrator {
 
                 // project:task
                 if dep.contains('#') {
-                    let (package, task_id) = self.find_project_task_from_id(dep)?;
+                    let (package, script) = self.find_project_task_from_script(dep)?;
+                    let task_id = self.create_id(&script)?;
 
                     deps.push(
                         Target::parse(format!("{}:{task_id}", package.id).as_str())
@@ -242,8 +275,6 @@ impl TurboMigrator {
         }
 
         // Options
-        config.platform = Some(PlatformType::Node);
-
         if turbo_task.cache == Some(false) {
             config
                 .options
@@ -298,8 +329,23 @@ impl TurboMigrator {
                     yaml::read_file(&project_config_path)?,
                 );
             } else {
+                let mut config = PartialProjectConfig::default();
+                config.platform = Some(PlatformType::Node);
+                config.language = Some(
+                    if self
+                        .workspace_root
+                        .join(project_source)
+                        .join("tsconfig.json")
+                        .exists()
+                    {
+                        LanguageType::TypeScript
+                    } else {
+                        LanguageType::JavaScript
+                    },
+                );
+
                 self.project_configs
-                    .insert(project_config_path.clone(), PartialProjectConfig::default());
+                    .insert(project_config_path.clone(), config);
             }
         }
 
@@ -317,32 +363,50 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     if root_config_path.exists() {
         host_log!(
             stdout,
-            "Migrating root config <path>{}</path>",
+            "Migrating root config <file>{}</file>",
             root_config_path
                 .strip_prefix(&migrator.workspace_root)
                 .unwrap()
                 .display()
         );
 
-        migrator.migrate_root_config(json::read_file(&root_config_path)?)?;
+        migrator.migrate_root_config(serde_json::from_slice(&fs::read_file_bytes(
+            &root_config_path,
+        )?)?)?;
 
         fs::remove(root_config_path)?;
     }
 
     // Then migrate project configs
-    for project_config_path in glob::walk_files(&migrator.workspace_root, ["**/turbo.json"])? {
-        host_log!(
-            stdout,
-            "Migrating project config <path>{}</path>",
-            project_config_path
-                .strip_prefix(&migrator.workspace_root)
-                .unwrap()
-                .display()
-        );
+    let project_sources = migrator
+        .project_graph
+        .projects
+        .values()
+        .map(|p| p.source.clone())
+        .collect::<Vec<_>>();
 
-        migrator.migrate_project_config(json::read_file(&project_config_path)?)?;
+    for project_source in project_sources {
+        let project_config_path = migrator
+            .workspace_root
+            .join(project_source)
+            .join("turbo.json");
 
-        fs::remove(project_config_path)?;
+        if project_config_path.exists() {
+            host_log!(
+                stdout,
+                "Migrating project config <file>{}</file>",
+                project_config_path
+                    .strip_prefix(&migrator.workspace_root)
+                    .unwrap()
+                    .display()
+            );
+
+            migrator.migrate_project_config(serde_json::from_slice(&fs::read_file_bytes(
+                &project_config_path,
+            )?)?)?;
+
+            fs::remove(project_config_path)?;
+        }
     }
 
     // Write the new config files

@@ -1,9 +1,6 @@
 use extism_pdk::*;
 use moon_extension_common::download::download_from_url;
-use moon_pdk::{
-    anyhow, args::*, extension::*, host_log, plugin_err, virtual_path, HostLogInput, HostLogTarget,
-    VirtualPath,
-};
+use moon_pdk::*;
 use starbase_archive::Archiver;
 use std::fs;
 

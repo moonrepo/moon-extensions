@@ -17,7 +17,8 @@ moon_pdk = { workspace = true }
 moon_target = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
-starbase_utils = { workspace = true, features = ["json", "yaml"] }
+serde_json = { workspace = true }
+starbase_utils = { workspace = true, features = ["yaml"] }
 
 [dev-dependencies]
 moon_pdk_test_utils = { workspace = true }

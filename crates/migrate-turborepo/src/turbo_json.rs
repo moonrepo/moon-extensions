@@ -2,7 +2,7 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 #[derive(Default, Deserialize)]
-#[serde(untagged, rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum TurboOutputMode {
     #[default]
     Full,
