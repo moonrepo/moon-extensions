@@ -97,6 +97,20 @@ mod migrate_turborepo {
     }
 
     #[test]
+    fn supports_no_pipeline() {
+        let sandbox = create_sandbox("missing-pipeline");
+        let plugin = create_extension("test", sandbox.path());
+
+        plugin.execute_extension(ExecuteExtensionInput {
+            args: vec![],
+            context: plugin.create_context(sandbox.path()),
+        });
+
+        assert!(!sandbox.path().join("turbo.json").exists());
+        assert!(!sandbox.path().join(".moon/tasks/node.yml").exists());
+    }
+
+    #[test]
     #[should_panic(expected = "Unable to migrate task for package client.")]
     fn errors_if_a_task_points_to_an_unknown_project() {
         let sandbox = create_sandbox("error-missing-project");

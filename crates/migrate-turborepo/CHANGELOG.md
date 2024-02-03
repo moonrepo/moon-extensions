@@ -1,3 +1,9 @@
+## Unreleased
+
+#### 🚀 Updates
+
+- Updated to allow a missing or empty `pipeline` in `turbo.json`.
+
 ## 0.0.1
 
 #### 🚀 Updates

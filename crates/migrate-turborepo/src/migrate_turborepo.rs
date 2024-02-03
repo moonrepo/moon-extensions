@@ -156,8 +156,12 @@ impl TurboMigrator {
         turbo_json: TurboJson,
         from_source: Option<&str>,
     ) -> AnyResult<()> {
+        let Some(pipeline) = turbo_json.pipeline else {
+            return Ok(());
+        };
+
         // package.json script names to turbo tasks
-        for (script, task) in turbo_json.pipeline {
+        for (script, task) in pipeline {
             let project_source;
             let script_name;
 

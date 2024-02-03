@@ -34,5 +34,5 @@ pub struct TurboJson {
     pub global_dot_env: Option<Vec<String>>,
     pub global_env: Option<Vec<String>>,
     pub global_pass_through_env: Option<Vec<String>>,
-    pub pipeline: FxHashMap<String, TurboTask>,
+    pub pipeline: Option<FxHashMap<String, TurboTask>>,
 }
