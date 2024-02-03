@@ -1671,6 +1671,8 @@ version = "0.1.0"
 dependencies = [
  "extism-pdk",
  "moon_pdk",
+ "rustc-hash",
+ "serde",
 ]
 
 [[package]]

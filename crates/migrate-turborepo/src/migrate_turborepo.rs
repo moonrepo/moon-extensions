@@ -1,4 +1,3 @@
-use crate::project_graph::{Project, ProjectGraph};
 use crate::turbo_json::*;
 use extism_pdk::*;
 use moon_common::Id;
@@ -7,7 +6,7 @@ use moon_config::{
     PartialProjectConfig, PartialTaskArgs, PartialTaskConfig, PartialTaskDependency,
     PartialTaskOptionsConfig, PlatformType, PortablePath, TaskOptionEnvFile, TaskOutputStyle,
 };
-use moon_extension_common::map_miette_error;
+use moon_extension_common::{map_miette_error, project_graph::*};
 use moon_pdk::*;
 use moon_target::Target;
 use rustc_hash::FxHashMap;
