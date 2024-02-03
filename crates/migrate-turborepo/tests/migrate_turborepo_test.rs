@@ -42,4 +42,58 @@ mod migrate_turborepo {
         assert_snapshot!(fs::read_to_string(sandbox.path().join("client/moon.yml")).unwrap());
         assert_snapshot!(fs::read_to_string(sandbox.path().join("server/moon.yml")).unwrap());
     }
+
+    #[test]
+    fn converts_to_a_root_project() {
+        let sandbox = create_sandbox("root-project");
+        let plugin = create_extension("test", sandbox.path());
+
+        plugin.execute_extension(ExecuteExtensionInput {
+            args: vec![],
+            context: plugin.create_context(sandbox.path()),
+        });
+
+        assert!(!sandbox.path().join("turbo.json").exists());
+        assert!(!sandbox.path().join(".moon/tasks/node.yml").exists());
+        assert!(sandbox.path().join("moon.yml").exists());
+
+        assert_snapshot!(fs::read_to_string(sandbox.path().join("moon.yml")).unwrap());
+    }
+
+    #[test]
+    fn merges_with_existing_root_tasks() {
+        let sandbox = create_sandbox("root-merge-existing");
+        let plugin = create_extension("test", sandbox.path());
+
+        plugin.execute_extension(ExecuteExtensionInput {
+            args: vec![],
+            context: plugin.create_context(sandbox.path()),
+        });
+
+        assert_snapshot!(fs::read_to_string(sandbox.path().join(".moon/tasks/node.yml")).unwrap());
+    }
+
+    #[test]
+    #[should_panic(expected = "Unable to migrate task for package client.")]
+    fn errors_if_a_task_points_to_an_unknown_project() {
+        let sandbox = create_sandbox("error-missing-project");
+        let plugin = create_extension("test", sandbox.path());
+
+        plugin.execute_extension(ExecuteExtensionInput {
+            args: vec![],
+            context: plugin.create_context(sandbox.path()),
+        });
+    }
+
+    #[test]
+    #[should_panic(expected = "Unable to migrate task for package client.")]
+    fn errors_if_a_dependson_points_to_an_unknown_project() {
+        let sandbox = create_sandbox("error-missing-project-deps");
+        let plugin = create_extension("test", sandbox.path());
+
+        plugin.execute_extension(ExecuteExtensionInput {
+            args: vec![],
+            context: plugin.create_context(sandbox.path()),
+        });
+    }
 }

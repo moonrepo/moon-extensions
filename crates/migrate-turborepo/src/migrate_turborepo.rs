@@ -101,27 +101,22 @@ impl TurboMigrator {
             for dep in global_deps {
                 implicit_inputs.push(InputPath::from_str(&dep)?);
             }
-
-            self.global_config_modified = true;
         }
 
         if let Some(global_dot_env) = turbo_json.global_dot_env.take() {
             for env_file in global_dot_env {
                 implicit_inputs.push(InputPath::from_str(&env_file)?);
             }
-
-            self.global_config_modified = true;
         }
 
         if let Some(global_env) = turbo_json.global_env.take() {
             for env in global_env {
                 implicit_inputs.push(InputPath::EnvVar(env.to_owned()));
             }
-
-            self.global_config_modified = true;
         }
 
         if !implicit_inputs.is_empty() {
+            self.global_config_modified = true;
             self.global_config
                 .implicit_inputs
                 .get_or_insert(vec![])
@@ -237,7 +232,7 @@ impl TurboMigrator {
                     continue;
                 }
 
-                // task
+                // ~:task
                 deps.push(Target::parse(dep).map_err(map_miette_error)?);
             }
 
