@@ -8,6 +8,11 @@ publish = false
 [lib]
 crate-type = ['cdylib']
 
+[package.metadata.release]
+pre-release-replacements = [
+	{ file = "./CHANGELOG.md", search = "Unreleased", replace = "{{version}}" },
+]
+
 [dependencies]
 moon_extension_common = { path = "../common" }
 extism-pdk = { workspace = true }
