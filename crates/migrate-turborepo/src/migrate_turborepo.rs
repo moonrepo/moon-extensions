@@ -81,10 +81,11 @@ impl TurboMigrator {
 
     fn find_project_in_graph(&self, package_name: &str) -> AnyResult<&Project> {
         for project in self.project_graph.projects.values() {
-            if project
-                .alias
-                .as_ref()
-                .is_some_and(|alias| alias == package_name)
+            if project.id == package_name
+                || project
+                    .alias
+                    .as_ref()
+                    .is_some_and(|alias| alias == package_name)
             {
                 return Ok(project);
             }
@@ -127,41 +128,44 @@ impl TurboMigrator {
                 .extend(implicit_inputs);
         }
 
-        self.migrate_pipeline(turbo_json)?;
+        self.migrate_pipeline(turbo_json, None)?;
 
         Ok(())
     }
 
-    fn migrate_project_config(&mut self, turbo_json: TurboJson) -> AnyResult<()> {
-        self.migrate_pipeline(turbo_json)
+    fn migrate_project_config(
+        &mut self,
+        project_source: &str,
+        turbo_json: TurboJson,
+    ) -> AnyResult<()> {
+        self.migrate_pipeline(turbo_json, Some(project_source))
     }
 
-    fn migrate_pipeline(&mut self, turbo_json: TurboJson) -> AnyResult<()> {
+    fn migrate_pipeline(
+        &mut self,
+        turbo_json: TurboJson,
+        from_source: Option<&str>,
+    ) -> AnyResult<()> {
         // package.json script names to turbo tasks
         for (script, task) in turbo_json.pipeline {
+            let project_source;
+            let script_name;
+
             // Root-level task
             if let Some(root_script) = script.strip_prefix("//#") {
-                let task = self.migrate_task(task, root_script)?;
-                let task_id = self.create_id(root_script)?;
-
-                self.load_project_config("")?
-                    .tasks
-                    .get_or_insert(BTreeMap::default())
-                    .insert(task_id, task);
+                project_source = String::new();
+                script_name = root_script.to_owned();
             }
-            // Project task
+            // Project-scoped task
             else if script.contains('#') {
-                let (package_source, script) = self
+                (project_source, script_name) = self
                     .find_project_task_from_script(&script)
                     .map(|(p, i)| (p.source.to_owned(), i))?;
-
-                let task = self.migrate_task(task, &script)?;
-                let task_id = self.create_id(&script)?;
-
-                self.load_project_config(&package_source)?
-                    .tasks
-                    .get_or_insert(BTreeMap::default())
-                    .insert(task_id, task);
+            }
+            // For a source task
+            else if let Some(source) = from_source {
+                project_source = source.to_owned();
+                script_name = script;
             }
             // Global task
             else {
@@ -173,7 +177,17 @@ impl TurboMigrator {
                     .tasks
                     .get_or_insert(BTreeMap::default())
                     .insert(task_id, task);
+
+                continue;
             }
+
+            let task = self.migrate_task(task, &script_name)?;
+            let task_id = self.create_id(&script_name)?;
+
+            self.load_project_config(&project_source)?
+                .tasks
+                .get_or_insert(BTreeMap::default())
+                .insert(task_id, task);
         }
 
         Ok(())
@@ -329,23 +343,25 @@ impl TurboMigrator {
                     yaml::read_file(&project_config_path)?,
                 );
             } else {
-                let mut config = PartialProjectConfig::default();
-                config.platform = Some(PlatformType::Node);
-                config.language = Some(
-                    if self
-                        .workspace_root
-                        .join(project_source)
-                        .join("tsconfig.json")
-                        .exists()
-                    {
-                        LanguageType::TypeScript
-                    } else {
-                        LanguageType::JavaScript
+                self.project_configs.insert(
+                    project_config_path.clone(),
+                    PartialProjectConfig {
+                        language: Some(
+                            if self
+                                .workspace_root
+                                .join(project_source)
+                                .join("tsconfig.json")
+                                .exists()
+                            {
+                                LanguageType::TypeScript
+                            } else {
+                                LanguageType::JavaScript
+                            },
+                        ),
+                        platform: Some(PlatformType::Node),
+                        ..PartialProjectConfig::default()
                     },
                 );
-
-                self.project_configs
-                    .insert(project_config_path.clone(), config);
             }
         }
 
@@ -388,7 +404,7 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     for project_source in project_sources {
         let project_config_path = migrator
             .workspace_root
-            .join(project_source)
+            .join(&project_source)
             .join("turbo.json");
 
         if project_config_path.exists() {
@@ -401,9 +417,10 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
                     .display()
             );
 
-            migrator.migrate_project_config(serde_json::from_slice(&fs::read_file_bytes(
-                &project_config_path,
-            )?)?)?;
+            migrator.migrate_project_config(
+                &project_source,
+                serde_json::from_slice(&fs::read_file_bytes(&project_config_path)?)?,
+            )?;
 
             fs::remove(project_config_path)?;
         }
