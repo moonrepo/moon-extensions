@@ -1624,6 +1624,8 @@ dependencies = [
 [[package]]
 name = "moon_common"
 version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ea04e66bf164c50032a04c499e127503f598ed34036f62c60c532c35b792c1f"
 dependencies = [
  "miette",
  "once_cell",
@@ -1638,6 +1640,8 @@ dependencies = [
 [[package]]
 name = "moon_config"
 version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b52381885017ccb8b8fc1f479f9f1c05006473c188dc3d1f158be934a01fd4c"
 dependencies = [
  "miette",
  "moon_common",
@@ -1695,7 +1699,9 @@ dependencies = [
 
 [[package]]
 name = "moon_pdk"
-version = "0.0.1"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4d970850ce91cd05054665d3c224a88c32c2df83d88ce1f3e554a981f6acce0"
 dependencies = [
  "clap",
  "extism-pdk",
@@ -1706,7 +1712,9 @@ dependencies = [
 
 [[package]]
 name = "moon_pdk_api"
-version = "0.0.1"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f69f60f33c4468928233a373453846b60a1451b95f6c19c78407f6e70a365d68"
 dependencies = [
  "serde",
  "warpgate_api",
@@ -1714,7 +1722,9 @@ dependencies = [
 
 [[package]]
 name = "moon_pdk_test_utils"
-version = "0.0.1"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50f18854bfac047d2862a9e2e08e27ba3b5f361ec22641b4a6ae96fd758753ae"
 dependencies = [
  "extism",
  "moon_pdk_api",
@@ -1726,6 +1736,8 @@ dependencies = [
 [[package]]
 name = "moon_target"
 version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b4b72af2d699ad732039b55322d0b7bd1a2072872186c733d9ed140dfe0ea02"
 dependencies = [
  "miette",
  "moon_common",
