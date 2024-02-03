@@ -1666,7 +1666,7 @@ dependencies = [
 
 [[package]]
 name = "moon_download_extension"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "extism-pdk",
  "moon_extension_common",
