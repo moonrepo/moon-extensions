@@ -1,7 +1,7 @@
 use crate::workspace_migrator::NxWorkspaceMigrator;
 use extism_pdk::*;
 use moon_pdk::*;
-use starbase_utils::{fs, json};
+use starbase_utils::{fs, json, yaml};
 
 #[host_fn]
 extern "ExtismHost" {
@@ -40,6 +40,17 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
 
     // Fill in any missing but required settings
     migrator.use_default_settings()?;
+
+    // Write the new config files
+    if migrator.global_config_modified {
+        yaml::write_file(migrator.global_config_path, &migrator.global_config)?;
+    }
+
+    if migrator.workspace_config_modified {
+        yaml::write_file(migrator.workspace_config_path, &migrator.workspace_config)?;
+    }
+
+    host_log!(stdout, "Successfully migrated from Nx to moon!");
 
     Ok(())
 }
