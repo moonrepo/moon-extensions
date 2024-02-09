@@ -78,14 +78,21 @@ pub struct NxTargetOptions {
 
 #[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct NxWorkspaceLayout {
+    pub apps_dir: Option<String>,
+    pub libs_dir: Option<String>,
+}
+
+#[derive(Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NxJson {
     pub affected: Option<NxAffected>,
     pub named_inputs: Option<NxNamedInputs>,
     pub target_defaults: Option<FxHashMap<String, NxTargetOptions>>,
+    pub workspace_layout: Option<NxWorkspaceLayout>,
     // Not supported:
-    // implicitDependencies, tasksRunnerOptions, workspaceLayout, generators,
-    // plugins, defaultProject, nxCloud*, parallel, cacheDirectory, useDaemonProcess,
-    // release,
+    // implicitDependencies, tasksRunnerOptions, release, generators,
+    // plugins, defaultProject, nxCloud*, parallel, cacheDirectory, useDaemonProcess
 }
 
 #[derive(Default, Deserialize)]

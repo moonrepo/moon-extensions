@@ -120,6 +120,16 @@ impl NxWorkspaceMigrator {
             }
         }
 
+        if self.workspace_config.projects.is_none() {
+            if let Some(layout) = nx_json.workspace_layout {
+                self.workspace_config_modified = true;
+                self.workspace_config.projects = Some(PartialWorkspaceProjects::Globs(vec![
+                    format!("{}/*", layout.apps_dir.unwrap_or("apps".into())),
+                    format!("{}/*", layout.libs_dir.unwrap_or("libs".into())),
+                ]));
+            }
+        }
+
         Ok(())
     }
 
@@ -133,6 +143,18 @@ impl NxWorkspaceMigrator {
         if !projects.is_empty() {
             self.workspace_config_modified = true;
             self.workspace_config.projects = Some(PartialWorkspaceProjects::Sources(projects));
+        }
+
+        Ok(())
+    }
+
+    pub fn use_default_settings(&mut self) -> AnyResult<()> {
+        if self.workspace_config.projects.is_none() {
+            self.workspace_config_modified = true;
+            self.workspace_config.projects = Some(PartialWorkspaceProjects::Globs(vec![
+                "apps/*".into(),
+                "packages/*".into(),
+            ]));
         }
 
         Ok(())
