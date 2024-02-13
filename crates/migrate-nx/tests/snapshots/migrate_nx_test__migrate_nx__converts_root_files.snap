@@ -9,4 +9,13 @@ fileGroups:
   production:
   - '!**/*.spec.tsx'
   - /static
+tasks:
+  build:
+    command: nx-compat execute @nrwl/js:tsc
+    deps:
+    - ^:build
+    inputs:
+    - '@group(production)'
+    options:
+      cache: true
 

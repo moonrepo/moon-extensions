@@ -42,8 +42,8 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     migrator.use_default_settings()?;
 
     // Write the new config files
-    if migrator.global_config_modified {
-        yaml::write_file(migrator.global_config_path, &migrator.global_config)?;
+    if migrator.tasks_config_modified {
+        yaml::write_file(migrator.tasks_config_path, &migrator.tasks_config)?;
     }
 
     if migrator.workspace_config_modified {
