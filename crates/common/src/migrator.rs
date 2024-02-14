@@ -65,7 +65,10 @@ impl Migrator {
         Ok(self.project_configs.get_mut(&project_config_path).unwrap())
     }
 
-    pub fn load_tasks_config(&mut self, scope: &str) -> AnyResult<&mut PartialProjectConfig> {
+    pub fn load_tasks_config(
+        &mut self,
+        scope: &str,
+    ) -> AnyResult<&mut PartialInheritedTasksConfig> {
         let tasks_config_path = self.root.join(".moon/tasks").join(format!("{scope}.yml"));
 
         if !self.tasks_configs.contains_key(&tasks_config_path) {
@@ -79,7 +82,13 @@ impl Migrator {
             );
         }
 
-        Ok(self.project_configs.get_mut(&tasks_config_path).unwrap())
+        Ok(self.tasks_configs.get_mut(&tasks_config_path).unwrap())
+    }
+
+    pub fn load_tasks_platform_config(&mut self) -> AnyResult<&mut PartialInheritedTasksConfig> {
+        let platform = self.platform.to_string();
+
+        self.load_tasks_config(&platform)
     }
 
     pub fn load_workspace_config(&mut self) -> AnyResult<&mut PartialWorkspaceConfig> {

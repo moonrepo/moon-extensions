@@ -28,7 +28,7 @@ impl NxMigrator {
     }
 
     pub fn use_default_settings(&mut self) -> AnyResult<()> {
-        let tasks_config = self.inner.load_tasks_config("node")?;
+        let tasks_config = self.inner.load_tasks_platform_config()?;
 
         if tasks_config.file_groups.is_none() {
             let file_groups = tasks_config.file_groups.get_or_insert(FxHashMap::default());
@@ -76,7 +76,7 @@ impl NxMigrator {
             if !named_inputs.is_empty() {
                 let file_groups = self
                     .inner
-                    .load_tasks_config("node")?
+                    .load_tasks_platform_config()?
                     .file_groups
                     .get_or_insert(FxHashMap::default());
 
@@ -93,7 +93,7 @@ impl NxMigrator {
         if let Some(target_defaults) = nx_json.target_defaults {
             let tasks = self
                 .inner
-                .load_tasks_config("node")?
+                .load_tasks_platform_config()?
                 .tasks
                 .get_or_insert(BTreeMap::default());
 
@@ -134,11 +134,11 @@ impl NxMigrator {
     pub fn migrate_project_config(
         &mut self,
         project_source: &str,
-        nx_project_json: NxProjectJson,
+        project_json: NxProjectJson,
     ) -> AnyResult<()> {
         let config = self.inner.load_project_config(project_source)?;
 
-        if let Some(implicit_dependencies) = nx_project_json.implicit_dependencies {
+        if let Some(implicit_dependencies) = project_json.implicit_dependencies {
             if !implicit_dependencies.is_empty() {
                 let depends_on = config.depends_on.get_or_insert(vec![]);
 
@@ -148,7 +148,7 @@ impl NxMigrator {
             }
         }
 
-        if let Some(named_inputs) = nx_project_json.named_inputs {
+        if let Some(named_inputs) = project_json.named_inputs {
             if !named_inputs.is_empty() {
                 let file_groups = config.file_groups.get_or_insert(FxHashMap::default());
 
@@ -162,7 +162,7 @@ impl NxMigrator {
             }
         }
 
-        if let Some(project_type) = nx_project_json.project_type {
+        if let Some(project_type) = project_json.project_type {
             if project_type == "library" {
                 config.type_of = Some(ProjectType::Library);
             } else if project_type == "application" {
@@ -170,11 +170,37 @@ impl NxMigrator {
             }
         }
 
-        if let Some(raw_tags) = nx_project_json.tags {
+        if let Some(raw_tags) = project_json.tags {
             let tags = config.tags.get_or_insert(vec![]);
 
             for tag in raw_tags {
                 tags.push(Id::clean(tag)?);
+            }
+        }
+
+        if let Some(targets) = project_json.targets {
+            let tasks = config.tasks.get_or_insert(BTreeMap::default());
+
+            for (name, target) in targets {
+                let task_id = Id::clean(name)?;
+
+                tasks.insert(task_id.clone(), migrate_task(&target)?);
+
+                // https://nx.dev/concepts/executors-and-configurations#use-task-configurations
+                if let Some(configurations) = target.configurations {
+                    for (config_name, config_options) in configurations {
+                        tasks.insert(
+                            Id::clean(format!("{task_id}-{config_name}"))?,
+                            PartialTaskConfig {
+                                extends: Some(task_id.clone()),
+                                args: Some(PartialTaskArgs::List(migrate_options_to_args(
+                                    &config_options,
+                                ))),
+                                ..PartialTaskConfig::default()
+                            },
+                        );
+                    }
+                }
             }
         }
 
@@ -202,25 +228,29 @@ fn is_path_or_glob(value: &str) -> bool {
         || value.starts_with('!')
 }
 
-fn replace_tokens(value: &str) -> String {
+fn replace_tokens(value: &str, for_sources: bool) -> String {
     let mut result = value.replace("{projectName}", "$project");
 
-    if result.starts_with("!{projectRoot}/") {
-        result = result.replacen("!{projectRoot}/", "!", 1);
-    }
+    if for_sources {
+        if result.starts_with("!{projectRoot}/") {
+            result = result.replacen("!{projectRoot}/", "!", 1);
+        }
 
-    if result.starts_with("{projectRoot}/") {
-        result = result.replacen("{projectRoot}/", "", 1);
+        if result.starts_with("{projectRoot}/") {
+            result = result.replacen("{projectRoot}/", "", 1);
+        }
     }
 
     result = result.replace("{projectRoot}", "$projectRoot");
 
-    if result.starts_with("!{workspaceRoot}/") {
-        result = result.replacen("{workspaceRoot}/", "!/", 1);
-    }
+    if for_sources {
+        if result.starts_with("!{workspaceRoot}/") {
+            result = result.replacen("{workspaceRoot}/", "!/", 1);
+        }
 
-    if result.starts_with("{workspaceRoot}/") {
-        result = result.replacen("{workspaceRoot}/", "/", 1);
+        if result.starts_with("{workspaceRoot}/") {
+            result = result.replacen("{workspaceRoot}/", "/", 1);
+        }
     }
 
     result = result.replace("{workspaceRoot}", "$workspaceRoot");
@@ -246,7 +276,7 @@ fn migrate_inputs(raw_inputs: &[NxInput]) -> AnyResult<Vec<InputPath>> {
                 inputs.push(InputPath::EnvVar(env.to_owned()));
             }
             NxInput::Fileset { fileset } => {
-                inputs.push(InputPath::from_str(&replace_tokens(&fileset))?);
+                inputs.push(InputPath::from_str(&replace_tokens(fileset, true))?);
             }
             NxInput::Runtime { .. } => {
                 // Not supported, moon includes tool version automatically
@@ -254,21 +284,37 @@ fn migrate_inputs(raw_inputs: &[NxInput]) -> AnyResult<Vec<InputPath>> {
             NxInput::Source(source) => {
                 // File path or glob
                 if is_path_or_glob(source) {
-                    inputs.push(InputPath::from_str(&replace_tokens(&source))?);
+                    inputs.push(InputPath::from_str(&replace_tokens(source, true))?);
                 }
                 // Named input
-                else {
-                    if source.starts_with('^') {
-                        // Not supported, cannot depend on sources from other projects
-                    } else {
-                        inputs.push(InputPath::TokenFunc(format!("@group({source})")));
-                    }
+                else if !source.starts_with('^') {
+                    inputs.push(InputPath::TokenFunc(format!("@group({source})")));
                 }
             }
         };
     }
 
     Ok(inputs)
+}
+
+fn migrate_options_to_args(options: &FxHashMap<String, JsonValue>) -> Vec<String> {
+    let mut args = vec![];
+
+    for (key, value) in options {
+        if matches!(value, JsonValue::Null) {
+            continue;
+        }
+
+        args.push(format!("--{key}"));
+        args.push(match value {
+            JsonValue::Bool(value) => if *value { "true" } else { "false" }.into(),
+            JsonValue::Number(value) => value.to_string(),
+            JsonValue::String(value) => replace_tokens(value, false),
+            _ => value.to_string(),
+        });
+    }
+
+    args
 }
 
 fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
@@ -293,16 +339,7 @@ fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
     // options, but in Nx, options can also be passed as command line args,
     // so let's replicate that and hope it works correctly!
     if let Some(options) = &nx_target.options {
-        let mut args = vec![];
-
-        for (key, value) in options {
-            if matches!(value, JsonValue::Null) {
-                continue;
-            }
-
-            args.push(format!("--{key}"));
-            args.push(value.to_string());
-        }
+        let args = migrate_options_to_args(options);
 
         if !args.is_empty() {
             config.args = Some(PartialTaskArgs::List(args));
@@ -350,7 +387,7 @@ fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
                             );
                         }
                     } else {
-                        deps.push(Target::new_self(&target).map_err(map_miette_error)?);
+                        deps.push(Target::new_self(target).map_err(map_miette_error)?);
                     }
                 }
                 NxDependsOn::String(target) => {
@@ -360,7 +397,7 @@ fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
                                 .map_err(map_miette_error)?,
                         );
                     } else {
-                        deps.push(Target::new_self(&target).map_err(map_miette_error)?);
+                        deps.push(Target::new_self(target).map_err(map_miette_error)?);
                     }
                 }
             };
@@ -392,7 +429,7 @@ fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
         let mut outputs = vec![];
 
         for output in raw_outputs {
-            outputs.push(OutputPath::from_str(&replace_tokens(output))?);
+            outputs.push(OutputPath::from_str(&replace_tokens(output, true))?);
         }
 
         if !outputs.is_empty() {

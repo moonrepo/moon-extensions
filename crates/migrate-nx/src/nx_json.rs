@@ -65,15 +65,15 @@ pub struct NxAffected {
 #[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NxTargetOptions {
-    pub cache: Option<bool>,     //
-    pub command: Option<String>, //
+    pub cache: Option<bool>,
+    pub command: Option<String>,
     pub configurations: Option<FxHashMap<String, FxHashMap<String, JsonValue>>>,
-    pub depends_on: Option<Vec<NxDependsOn>>, //
+    pub depends_on: Option<Vec<NxDependsOn>>,
     pub default_configuration: Option<String>,
-    pub executor: Option<String>,                      //
-    pub inputs: Option<Vec<NxInput>>,                  //
-    pub options: Option<FxHashMap<String, JsonValue>>, //
-    pub outputs: Option<Vec<String>>,                  //
+    pub executor: Option<String>,
+    pub inputs: Option<Vec<NxInput>>,
+    pub options: Option<FxHashMap<String, JsonValue>>,
+    pub outputs: Option<Vec<String>>,
 }
 
 #[derive(Default, Deserialize)]
