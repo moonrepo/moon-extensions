@@ -8,11 +8,17 @@ use std::path::PathBuf;
 #[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NxProjectJson {
-    pub implicit_dependencies: Option<Vec<String>>,
-    pub named_inputs: Option<NxNamedInputs>,
-    pub project_type: Option<String>,
-    pub root: Option<PathBuf>,
-    pub source_root: Option<PathBuf>,
-    pub tags: Option<Vec<String>>,
+    pub implicit_dependencies: Option<Vec<String>>, //
+    pub named_inputs: Option<NxNamedInputs>,        //
+    pub project_type: Option<String>,               //
+    pub root: Option<PathBuf>,                      //
+    pub source_root: Option<PathBuf>,               //
+    pub tags: Option<Vec<String>>,                  //
     pub targets: Option<FxHashMap<String, NxTargetOptions>>,
+}
+
+#[derive(Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PackageJsonWithNx {
+    pub nx: Option<NxProjectJson>,
 }

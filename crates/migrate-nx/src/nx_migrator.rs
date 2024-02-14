@@ -1,19 +1,22 @@
 use crate::nx_json::*;
+use crate::nx_project_json::{NxProjectJson, PackageJsonWithNx};
 use moon_common::Id;
 use moon_config::{
-    InputPath, OutputPath, PartialInheritedTasksConfig, PartialTaskArgs, PartialTaskConfig,
-    PartialTaskDependency, PartialTaskOptionsConfig, PartialVcsConfig, PartialWorkspaceConfig,
-    PartialWorkspaceProjects,
+    InputPath, LanguageType, OutputPath, PartialInheritedTasksConfig, PartialProjectConfig,
+    PartialProjectDependsOn, PartialTaskArgs, PartialTaskConfig, PartialTaskDependency,
+    PartialTaskOptionsConfig, PartialVcsConfig, PartialWorkspaceConfig, PartialWorkspaceProjects,
+    PlatformType, ProjectType,
 };
 use moon_pdk::{map_miette_error, AnyResult, MoonContext, VirtualPath};
 use moon_target::Target;
 use rustc_hash::FxHashMap;
-use starbase_utils::yaml;
+use starbase_utils::{json::JsonValue, yaml};
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-pub struct NxWorkspaceMigrator {
+pub struct NxMigrator {
     pub context: MoonContext,
+    pub project_configs: FxHashMap<VirtualPath, PartialProjectConfig>,
     pub tasks_config: PartialInheritedTasksConfig,
     pub tasks_config_path: VirtualPath,
     pub tasks_config_modified: bool,
@@ -23,7 +26,7 @@ pub struct NxWorkspaceMigrator {
     pub workspace_root: VirtualPath,
 }
 
-impl NxWorkspaceMigrator {
+impl NxMigrator {
     pub fn new(context: &MoonContext) -> AnyResult<Self> {
         // Load global configs if it exists
         let tasks_config_path = context.workspace_root.join(".moon/tasks/node.yml");
@@ -42,6 +45,7 @@ impl NxWorkspaceMigrator {
 
         Ok(Self {
             context: context.to_owned(),
+            project_configs: FxHashMap::default(),
             tasks_config,
             tasks_config_path,
             tasks_config_modified: false,
@@ -111,7 +115,7 @@ impl NxWorkspaceMigrator {
 
                     if !group.is_empty() {
                         self.tasks_config_modified = true;
-                        file_groups.insert(Id::new(name)?, group);
+                        file_groups.insert(Id::clean(name)?, group);
                     }
                 }
             }
@@ -121,7 +125,7 @@ impl NxWorkspaceMigrator {
             let tasks = self.tasks_config.tasks.get_or_insert(BTreeMap::default());
 
             for (name, target_config) in target_defaults {
-                tasks.insert(Id::new(name)?, migrate_task(target_config)?);
+                tasks.insert(Id::clean(name)?, migrate_task(&target_config)?);
             }
         }
 
@@ -142,7 +146,7 @@ impl NxWorkspaceMigrator {
         let mut projects = FxHashMap::default();
 
         for (key, value) in workspace_json.projects {
-            projects.insert(Id::new(key)?, value);
+            projects.insert(Id::clean(key)?, value);
         }
 
         if !projects.is_empty() {
@@ -151,6 +155,106 @@ impl NxWorkspaceMigrator {
         }
 
         Ok(())
+    }
+
+    pub fn migrate_project_config(
+        &mut self,
+        project_source: &str,
+        nx_project: NxProjectJson,
+    ) -> AnyResult<()> {
+        let config = self.load_project_config(project_source)?;
+
+        if let Some(implicit_dependencies) = nx_project.implicit_dependencies {
+            if !implicit_dependencies.is_empty() {
+                let depends_on = config.depends_on.get_or_insert(vec![]);
+
+                for dep in implicit_dependencies {
+                    depends_on.push(PartialProjectDependsOn::String(Id::clean(dep)?));
+                }
+            }
+        }
+
+        if let Some(named_inputs) = nx_project.named_inputs {
+            if !named_inputs.is_empty() {
+                let file_groups = config.file_groups.get_or_insert(FxHashMap::default());
+
+                for (name, raw_inputs) in named_inputs {
+                    let group = migrate_inputs(&raw_inputs)?;
+
+                    if !group.is_empty() {
+                        file_groups.insert(Id::clean(name)?, group);
+                    }
+                }
+            }
+        }
+
+        if let Some(project_type) = nx_project.project_type {
+            if project_type == "library" {
+                config.type_of = Some(ProjectType::Library);
+            } else if project_type == "application" {
+                config.type_of = Some(ProjectType::Application);
+            }
+        }
+
+        if let Some(raw_tags) = nx_project.tags {
+            let tags = config.tags.get_or_insert(vec![]);
+
+            for tag in raw_tags {
+                tags.push(Id::clean(tag)?);
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn migrate_project_package_config(
+        &mut self,
+        project_source: &str,
+        nx_package: PackageJsonWithNx,
+    ) -> AnyResult<()> {
+        if let Some(nx) = nx_package.nx {
+            self.migrate_project_config(project_source, nx)?;
+        }
+
+        Ok(())
+    }
+
+    fn load_project_config(
+        &mut self,
+        project_source: &str,
+    ) -> AnyResult<&mut PartialProjectConfig> {
+        let project_config_path = self.workspace_root.join(project_source).join("moon.yml");
+
+        if !self.project_configs.contains_key(&project_config_path) {
+            if project_config_path.exists() {
+                self.project_configs.insert(
+                    project_config_path.clone(),
+                    yaml::read_file(&project_config_path)?,
+                );
+            } else {
+                self.project_configs.insert(
+                    project_config_path.clone(),
+                    PartialProjectConfig {
+                        language: Some(
+                            if self
+                                .workspace_root
+                                .join(project_source)
+                                .join("tsconfig.json")
+                                .exists()
+                            {
+                                LanguageType::TypeScript
+                            } else {
+                                LanguageType::JavaScript
+                            },
+                        ),
+                        platform: Some(PlatformType::Node),
+                        ..PartialProjectConfig::default()
+                    },
+                );
+            }
+        }
+
+        Ok(self.project_configs.get_mut(&project_config_path).unwrap())
     }
 }
 
@@ -231,16 +335,43 @@ fn migrate_inputs(raw_inputs: &[NxInput]) -> AnyResult<Vec<InputPath>> {
     Ok(inputs)
 }
 
-fn migrate_task(nx_target: NxTargetOptions) -> AnyResult<PartialTaskConfig> {
+fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
     let mut config = PartialTaskConfig::default();
     let mut inputs = vec![];
 
     config.command = Some(PartialTaskArgs::String(
         nx_target
             .command
-            .or_else(|| nx_target.executor.map(|e| format!("nx-compat execute {e}")))
+            .clone()
+            .or_else(|| {
+                nx_target
+                    .executor
+                    .as_ref()
+                    .map(|e| format!("nx-compat execute {e}"))
+            })
             .unwrap_or("noop".into()),
     ));
+
+    // Arguments
+    // This is a bit complicated, since moon doesn't have a concept of arbitrary
+    // options, but in Nx, options can also be passed as command line args,
+    // so let's replicate that and hope it works correctly!
+    if let Some(options) = &nx_target.options {
+        let mut args = vec![];
+
+        for (key, value) in options {
+            if matches!(value, JsonValue::Null) {
+                continue;
+            }
+
+            args.push(format!("--{key}"));
+            args.push(value.to_string());
+        }
+
+        if !args.is_empty() {
+            config.args = Some(PartialTaskArgs::List(args));
+        }
+    }
 
     // Dependencies
     // - https://nx.dev/reference/project-configuration#dependson
@@ -331,6 +462,10 @@ fn migrate_task(nx_target: NxTargetOptions) -> AnyResult<PartialTaskConfig> {
         if !outputs.is_empty() {
             config.outputs = Some(outputs);
         }
+    }
+
+    if nx_target.command.is_some() {
+        config.platform = Some(PlatformType::System);
     }
 
     if nx_target.cache == Some(true) {

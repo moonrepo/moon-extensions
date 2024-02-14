@@ -82,7 +82,7 @@ impl TurboMigrator {
     }
 
     fn create_id(&self, id: &str) -> AnyResult<Id> {
-        Ok(Id::new(id.replace(':', "."))?)
+        Ok(Id::clean(id.replace(':', "."))?)
     }
 
     fn find_project_task_from_script(&self, script: &str) -> AnyResult<(&Project, String)> {

@@ -70,11 +70,10 @@ pub struct NxTargetOptions {
     pub configurations: Option<FxHashMap<String, FxHashMap<String, JsonValue>>>,
     pub depends_on: Option<Vec<NxDependsOn>>, //
     pub default_configuration: Option<String>,
-    pub executor: Option<String>,     //
-    pub inputs: Option<Vec<NxInput>>, //
-    pub named_inputs: Option<NxNamedInputs>,
-    pub options: Option<FxHashMap<String, JsonValue>>,
-    pub outputs: Option<Vec<String>>, //
+    pub executor: Option<String>,                      //
+    pub inputs: Option<Vec<NxInput>>,                  //
+    pub options: Option<FxHashMap<String, JsonValue>>, //
+    pub outputs: Option<Vec<String>>,                  //
 }
 
 #[derive(Default, Deserialize)]
