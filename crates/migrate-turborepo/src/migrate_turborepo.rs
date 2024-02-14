@@ -1,16 +1,14 @@
 use crate::turbo_json::*;
 use extism_pdk::*;
-use moon_common::Id;
 use moon_config::{
-    FilePath, InputPath, LanguageType, OutputPath, PartialInheritedTasksConfig,
-    PartialProjectConfig, PartialTaskArgs, PartialTaskConfig, PartialTaskDependency,
+    FilePath, InputPath, OutputPath, PartialTaskArgs, PartialTaskConfig, PartialTaskDependency,
     PartialTaskOptionsConfig, PlatformType, PortablePath, TaskOptionEnvFile, TaskOutputStyle,
 };
+use moon_extension_common::migrator::*;
 use moon_extension_common::project_graph::*;
 use moon_pdk::*;
 use moon_target::Target;
-use rustc_hash::FxHashMap;
-use starbase_utils::{fs, json, yaml};
+use starbase_utils::{fs, json};
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
@@ -27,62 +25,35 @@ pub struct MigrateTurborepoExtensionArgs {
 }
 
 struct TurboMigrator {
-    pub args: MigrateTurborepoExtensionArgs,
-    pub global_config: PartialInheritedTasksConfig,
-    pub global_config_path: VirtualPath,
-    pub global_config_modified: bool,
+    pub inner: Migrator,
     pub package_manager: String,
-    pub project_configs: FxHashMap<VirtualPath, PartialProjectConfig>,
     pub project_graph: ProjectGraph,
-    pub workspace_root: VirtualPath,
 }
 
 impl TurboMigrator {
-    pub fn new(args: MigrateTurborepoExtensionArgs, context: &MoonContext) -> AnyResult<Self> {
-        // Load global config if it exists
-        let global_config_path = context.workspace_root.join(if args.bun {
-            ".moon/tasks/bun.yml"
-        } else {
-            ".moon/tasks/node.yml"
-        });
-        let global_config = if global_config_path.exists() {
-            yaml::read_file(&global_config_path)?
-        } else {
-            PartialInheritedTasksConfig::default()
-        };
+    pub fn new(args: &MigrateTurborepoExtensionArgs, context: &MoonContext) -> AnyResult<Self> {
+        let mut migrator = Migrator::new(&context.workspace_root)?;
+        let mut package_manager = "npm";
+
+        if args.bun || context.workspace_root.join("bun.lockb").exists() {
+            migrator.platform = PlatformType::Bun;
+            package_manager = "bun";
+        } else if context.workspace_root.join("pnpm-lock.yaml").exists() {
+            package_manager = "pnpm";
+        } else if context.workspace_root.join("yarn.lock").exists() {
+            package_manager = "yarn";
+        }
 
         // Load project graph information first
         let project_graph_result =
             exec_command!("moon", ["project-graph", "--json", "--log", "off"]);
         let project_graph: ProjectGraph = json::from_str(&project_graph_result.stdout)?;
 
-        // Determine the package manager to run tasks with
-        let mut package_manager = if args.bun { "bun" } else { "npm" };
-
-        if !args.bun {
-            if context.workspace_root.join("pnpm-lock.yaml").exists() {
-                package_manager = "pnpm";
-            } else if context.workspace_root.join("yarn.lock").exists() {
-                package_manager = "yarn";
-            } else if context.workspace_root.join("bun.lockb").exists() {
-                package_manager = "bun";
-            }
-        }
-
         Ok(Self {
-            args,
-            global_config,
-            global_config_path,
-            global_config_modified: false,
+            inner: migrator,
             package_manager: package_manager.to_owned(),
-            project_configs: FxHashMap::default(),
             project_graph,
-            workspace_root: context.workspace_root.clone(),
         })
-    }
-
-    fn create_id(&self, id: &str) -> AnyResult<Id> {
-        Ok(Id::clean(id.replace(':', "."))?)
     }
 
     fn find_project_task_from_script(&self, script: &str) -> AnyResult<(&Project, String)> {
@@ -131,8 +102,8 @@ impl TurboMigrator {
         }
 
         if !implicit_inputs.is_empty() {
-            self.global_config_modified = true;
-            self.global_config
+            self.inner
+                .load_tasks_platform_config()?
                 .implicit_inputs
                 .get_or_insert(vec![])
                 .extend(implicit_inputs);
@@ -184,10 +155,10 @@ impl TurboMigrator {
             // Global task
             else {
                 let task = self.migrate_task(task, &script)?;
-                let task_id = self.create_id(&script)?;
+                let task_id = create_id(&script)?;
 
-                self.global_config_modified = true;
-                self.global_config
+                self.inner
+                    .load_tasks_platform_config()?
                     .tasks
                     .get_or_insert(BTreeMap::default())
                     .insert(task_id, task);
@@ -196,9 +167,10 @@ impl TurboMigrator {
             }
 
             let task = self.migrate_task(task, &script_name)?;
-            let task_id = self.create_id(&script_name)?;
+            let task_id = create_id(&script_name)?;
 
-            self.load_project_config(&project_source)?
+            self.inner
+                .load_project_config(&project_source)?
                 .tasks
                 .get_or_insert(BTreeMap::default())
                 .insert(task_id, task);
@@ -242,7 +214,7 @@ impl TurboMigrator {
                 // project:task
                 if dep.contains('#') {
                     let (package, script) = self.find_project_task_from_script(dep)?;
-                    let task_id = self.create_id(&script)?;
+                    let task_id = create_id(&script)?;
 
                     deps.push(
                         Target::parse(format!("{}:{task_id}", package.id).as_str())
@@ -343,67 +315,19 @@ impl TurboMigrator {
 
         Ok(config)
     }
-
-    fn load_project_config(
-        &mut self,
-        project_source: &str,
-    ) -> AnyResult<&mut PartialProjectConfig> {
-        let project_config_path = self.workspace_root.join(project_source).join("moon.yml");
-
-        if !self.project_configs.contains_key(&project_config_path) {
-            if project_config_path.exists() {
-                self.project_configs.insert(
-                    project_config_path.clone(),
-                    yaml::read_file(&project_config_path)?,
-                );
-            } else {
-                self.project_configs.insert(
-                    project_config_path.clone(),
-                    PartialProjectConfig {
-                        language: Some(
-                            if self
-                                .workspace_root
-                                .join(project_source)
-                                .join("tsconfig.json")
-                                .exists()
-                            {
-                                LanguageType::TypeScript
-                            } else {
-                                LanguageType::JavaScript
-                            },
-                        ),
-                        platform: Some(if self.args.bun {
-                            PlatformType::Bun
-                        } else {
-                            PlatformType::Node
-                        }),
-                        ..PartialProjectConfig::default()
-                    },
-                );
-            }
-        }
-
-        Ok(self.project_configs.get_mut(&project_config_path).unwrap())
-    }
 }
 
 #[plugin_fn]
 pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<()> {
     let args = parse_args::<MigrateTurborepoExtensionArgs>(&input.args)?;
-    let mut migrator = TurboMigrator::new(args, &input.context)?;
+    let workspace_root = &input.context.workspace_root;
+    let mut migrator = TurboMigrator::new(&args, &input.context)?;
 
     // Migrate the workspace root config first
-    let root_config_path = migrator.workspace_root.join("turbo.json");
+    let root_config_path = workspace_root.join("turbo.json");
 
     if root_config_path.exists() {
-        host_log!(
-            stdout,
-            "Migrating root config <file>{}</file>",
-            root_config_path
-                .strip_prefix(&migrator.workspace_root)
-                .unwrap()
-                .display()
-        );
+        host_log!(stdout, "Migrating root config <file>turbo.json</file>",);
 
         migrator.migrate_root_config(json::read_file(&root_config_path)?)?;
 
@@ -419,19 +343,13 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
         .collect::<Vec<_>>();
 
     for project_source in project_sources {
-        let project_config_path = migrator
-            .workspace_root
-            .join(&project_source)
-            .join("turbo.json");
+        let project_config_path = workspace_root.join(&project_source).join("turbo.json");
 
         if project_config_path.exists() {
             host_log!(
                 stdout,
                 "Migrating project config <file>{}</file>",
-                project_config_path
-                    .strip_prefix(&migrator.workspace_root)
-                    .unwrap()
-                    .display()
+                format!("{}/turbo.json", project_source),
             );
 
             migrator
@@ -442,13 +360,7 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     }
 
     // Write the new config files
-    if migrator.global_config_modified {
-        yaml::write_file(migrator.global_config_path, &migrator.global_config)?;
-    }
-
-    for (project_config_path, project_config) in migrator.project_configs {
-        yaml::write_file(project_config_path, &project_config)?;
-    }
+    migrator.inner.save_configs()?;
 
     host_log!(stdout, "Successfully migrated from Turborepo to moon!");
 

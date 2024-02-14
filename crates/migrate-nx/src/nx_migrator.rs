@@ -1,12 +1,11 @@
 use crate::nx_json::*;
 use crate::nx_project_json::{NxProjectJson, PackageJsonWithNx};
-use moon_common::Id;
 use moon_config::{
     InputPath, OutputPath, PartialProjectDependsOn, PartialTaskArgs, PartialTaskConfig,
     PartialTaskDependency, PartialTaskOptionsConfig, PartialVcsConfig, PartialWorkspaceProjects,
     PlatformType, ProjectType,
 };
-use moon_extension_common::migrator::Migrator;
+use moon_extension_common::migrator::*;
 use moon_pdk::{map_miette_error, AnyResult, MoonContext};
 use moon_target::Target;
 use rustc_hash::FxHashMap;
@@ -15,7 +14,6 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 pub struct NxMigrator {
-    pub context: MoonContext,
     pub inner: Migrator,
 }
 
@@ -23,7 +21,6 @@ impl NxMigrator {
     pub fn new(context: &MoonContext) -> AnyResult<Self> {
         Ok(Self {
             inner: Migrator::new(&context.workspace_root)?,
-            context: context.to_owned(),
         })
     }
 
@@ -84,7 +81,7 @@ impl NxMigrator {
                     let group = migrate_inputs(&raw_inputs)?;
 
                     if !group.is_empty() {
-                        file_groups.insert(Id::clean(name)?, group);
+                        file_groups.insert(create_id(name)?, group);
                     }
                 }
             }
@@ -98,7 +95,7 @@ impl NxMigrator {
                 .get_or_insert(BTreeMap::default());
 
             for (name, target_config) in target_defaults {
-                tasks.insert(Id::clean(name)?, migrate_task(&target_config)?);
+                tasks.insert(create_id(name)?, migrate_task(&target_config)?);
             }
         }
 
@@ -120,7 +117,7 @@ impl NxMigrator {
         let mut projects = FxHashMap::default();
 
         for (id, source) in workspace_json.projects {
-            projects.insert(Id::clean(id)?, source);
+            projects.insert(create_id(id)?, source);
         }
 
         if !projects.is_empty() {
@@ -143,7 +140,7 @@ impl NxMigrator {
                 let depends_on = config.depends_on.get_or_insert(vec![]);
 
                 for dep in implicit_dependencies {
-                    depends_on.push(PartialProjectDependsOn::String(Id::clean(dep)?));
+                    depends_on.push(PartialProjectDependsOn::String(create_id(dep)?));
                 }
             }
         }
@@ -156,7 +153,7 @@ impl NxMigrator {
                     let group = migrate_inputs(&raw_inputs)?;
 
                     if !group.is_empty() {
-                        file_groups.insert(Id::clean(name)?, group);
+                        file_groups.insert(create_id(name)?, group);
                     }
                 }
             }
@@ -174,7 +171,7 @@ impl NxMigrator {
             let tags = config.tags.get_or_insert(vec![]);
 
             for tag in raw_tags {
-                tags.push(Id::clean(tag)?);
+                tags.push(create_id(tag)?);
             }
         }
 
@@ -182,7 +179,7 @@ impl NxMigrator {
             let tasks = config.tasks.get_or_insert(BTreeMap::default());
 
             for (name, target) in targets {
-                let task_id = Id::clean(name)?;
+                let task_id = create_id(name)?;
 
                 tasks.insert(task_id.clone(), migrate_task(&target)?);
 
@@ -190,7 +187,7 @@ impl NxMigrator {
                 if let Some(configurations) = target.configurations {
                     for (config_name, config_options) in configurations {
                         tasks.insert(
-                            Id::clean(format!("{task_id}-{config_name}"))?,
+                            create_id(format!("{task_id}.{config_name}"))?,
                             PartialTaskConfig {
                                 extends: Some(task_id.clone()),
                                 args: Some(PartialTaskArgs::List(migrate_options_to_args(

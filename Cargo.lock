@@ -1680,6 +1680,7 @@ name = "moon_extension_common"
 version = "0.1.0"
 dependencies = [
  "extism-pdk",
+ "moon_common",
  "moon_config",
  "moon_pdk",
  "rustc-hash",

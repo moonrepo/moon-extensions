@@ -1,3 +1,4 @@
+use moon_common::Id;
 use moon_config::{
     LanguageType, PartialInheritedTasksConfig, PartialProjectConfig, PartialWorkspaceConfig,
     PlatformType,
@@ -118,4 +119,8 @@ impl Migrator {
 
         Ok(())
     }
+}
+
+pub fn create_id<T: AsRef<str>>(id: T) -> AnyResult<Id> {
+    Ok(Id::clean(id.as_ref().replace(':', "."))?)
 }
