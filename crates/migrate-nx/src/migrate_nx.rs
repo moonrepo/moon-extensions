@@ -1,7 +1,7 @@
 use crate::nx_migrator::NxMigrator;
 use extism_pdk::*;
 use moon_pdk::*;
-use starbase_utils::{fs, glob, json, yaml};
+use starbase_utils::{fs, glob, json};
 
 #[host_fn]
 extern "ExtismHost" {
@@ -12,9 +12,10 @@ extern "ExtismHost" {
 #[plugin_fn]
 pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<()> {
     let mut migrator = NxMigrator::new(&input.context)?;
+    let workspace_root = &input.context.workspace_root;
 
     // Migrate the workspace config first, so we can handle projects
-    let workspace_config_path = migrator.workspace_root.join("workspace.json");
+    let workspace_config_path = workspace_root.join("workspace.json");
 
     if workspace_config_path.exists() {
         host_log!(
@@ -28,7 +29,7 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     }
 
     // Then the root nx config second, to handle project defaults
-    let root_config_path = migrator.workspace_root.join("nx.json");
+    let root_config_path = workspace_root.join("nx.json");
 
     if root_config_path.exists() {
         host_log!(stdout, "Migrating root config <file>nx.json</file>",);
@@ -38,29 +39,22 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
         fs::remove(root_config_path)?;
     }
 
-    // And lastly, all project configs (and package json to)
+    // And lastly, all project configs (and package.json to)
     for project_config_path in glob::walk_files(
-        &migrator.workspace_root,
+        workspace_root,
         [
             "**/*/package.json",
             "**/*/project.json",
             "!**/node_modules/**/*",
         ],
     )? {
-        let project_source = project_config_path
-            .parent()
-            .unwrap()
-            .strip_prefix(&migrator.workspace_root)
-            .unwrap()
-            .to_string_lossy();
+        let rel_config_path = project_config_path.strip_prefix(&workspace_root).unwrap();
+        let project_source = rel_config_path.parent().unwrap().to_string_lossy();
 
         host_log!(
             stdout,
             "Migrating project config <file>{}</file>",
-            project_config_path
-                .strip_prefix(&migrator.workspace_root)
-                .unwrap()
-                .display()
+            rel_config_path.display()
         );
 
         if project_config_path
@@ -85,17 +79,7 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     migrator.use_default_settings()?;
 
     // Write the new config files
-    if migrator.tasks_config_modified {
-        yaml::write_file(migrator.tasks_config_path, &migrator.tasks_config)?;
-    }
-
-    if migrator.workspace_config_modified {
-        yaml::write_file(migrator.workspace_config_path, &migrator.workspace_config)?;
-    }
-
-    for (project_config_path, project_config) in migrator.project_configs {
-        yaml::write_file(project_config_path, &project_config)?;
-    }
+    migrator.inner.save_configs()?;
 
     host_log!(stdout, "Successfully migrated from Nx to moon!");
 

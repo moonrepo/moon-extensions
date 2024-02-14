@@ -7,6 +7,8 @@ publish = false
 
 [dependencies]
 extism-pdk = { workspace = true }
+moon_config = { workspace = true }
 moon_pdk = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
+starbase_utils = { workspace = true, features = ["yaml"] }

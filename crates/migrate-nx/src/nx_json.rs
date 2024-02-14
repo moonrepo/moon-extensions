@@ -97,6 +97,6 @@ pub struct NxJson {
 
 #[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct WorkspaceJson {
+pub struct NxWorkspaceJson {
     pub projects: FxHashMap<String, String>,
 }
