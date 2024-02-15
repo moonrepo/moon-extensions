@@ -1,5 +1,5 @@
 use crate::nx_json::*;
-use crate::nx_project_json::{NxProjectJson, PackageJsonWithNx};
+use crate::nx_project_json::*;
 use moon_config::{
     InputPath, OutputPath, PartialProjectDependsOn, PartialTaskArgs, PartialTaskConfig,
     PartialTaskDependency, PartialTaskOptionsConfig, PartialVcsConfig, PartialWorkspaceProjects,

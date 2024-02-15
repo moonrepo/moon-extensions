@@ -6,7 +6,6 @@ use starbase_utils::{fs, glob, json};
 
 #[host_fn]
 extern "ExtismHost" {
-    fn exec_command(input: Json<ExecCommandInput>) -> Json<ExecCommandOutput>;
     fn host_log(input: Json<HostLogInput>);
 }
 

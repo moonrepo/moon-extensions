@@ -36,3 +36,8 @@ pub struct TurboJson {
     pub global_pass_through_env: Option<Vec<String>>,
     pub pipeline: Option<FxHashMap<String, TurboTask>>,
 }
+
+#[derive(Default, Deserialize)]
+pub struct PackageJson {
+    pub name: Option<String>,
+}
