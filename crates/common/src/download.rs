@@ -1,3 +1,4 @@
+use crate::format_virtual_path;
 use extism_pdk::debug;
 use moon_pdk::{fetch_url_bytes, AnyResult, VirtualPath};
 use std::fs;
@@ -24,7 +25,7 @@ pub fn download_from_url<U: AsRef<str>, P: AsRef<VirtualPath>>(
     fs::create_dir_all(dir)?;
     fs::write(&file, bytes)?;
 
-    debug!("Downloaded to <path>{}</path>", file.real_path().display());
+    debug!("Downloaded to <path>{}</path>", format_virtual_path(&file));
 
     Ok(file)
 }

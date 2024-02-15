@@ -23,5 +23,5 @@ tasks:
     extends: e2e
     args:
     - --baseUrl
-    - $workspaceRoot/https://some-internal-url.example.com
+    - https://some-internal-url.example.com
 

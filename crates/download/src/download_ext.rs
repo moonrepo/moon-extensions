@@ -1,5 +1,6 @@
 use extism_pdk::*;
 use moon_extension_common::download::download_from_url;
+use moon_extension_common::format_virtual_path;
 use moon_pdk::*;
 
 #[host_fn]
@@ -41,13 +42,13 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     if dest_dir.exists() && dest_dir.is_file() {
         return Err(plugin_err!(
             "Destination <path>{}</path> must be a directory, found a file.",
-            dest_dir.real_path().display(),
+            format_virtual_path(&dest_dir),
         ));
     }
 
     debug!(
         "Destination <path>{}</path> will be used",
-        dest_dir.real_path().display(),
+        format_virtual_path(&dest_dir),
     );
 
     // Attempt to download the file
@@ -58,7 +59,7 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     host_log!(
         stdout,
         "Downloaded to <path>{}</path>",
-        dest_file.real_path().display()
+        format_virtual_path(&dest_file),
     );
 
     Ok(())
