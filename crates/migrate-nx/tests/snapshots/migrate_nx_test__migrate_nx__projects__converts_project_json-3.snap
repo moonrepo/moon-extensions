@@ -1,0 +1,27 @@
+---
+source: crates/migrate-nx/tests/migrate_nx_test.rs
+expression: "fs::read_to_string(sandbox.path().join(\"foo/moon.yml\")).unwrap()"
+---
+dependsOn:
+- bar
+language: javascript
+platform: node
+tasks:
+  e2e:
+    command: moon-nx execute @nx/cypress:cypress
+    args:
+    - --cypressConfig
+    - $workspaceRoot/foo/cypress.config.ts
+    - --parallel
+    - --no-debug
+  e2e.dev:
+    extends: e2e
+    args:
+    - --devServerTarget
+    - my-app:serve
+  e2e.qa:
+    extends: e2e
+    args:
+    - --baseUrl
+    - $workspaceRoot/https://some-internal-url.example.com
+

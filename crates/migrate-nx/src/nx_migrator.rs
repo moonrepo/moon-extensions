@@ -78,7 +78,7 @@ impl NxMigrator {
                     .get_or_insert(FxHashMap::default());
 
                 for (name, raw_inputs) in named_inputs {
-                    let group = migrate_inputs(&raw_inputs)?;
+                    let group = migrate_inputs(&raw_inputs, true)?;
 
                     if !group.is_empty() {
                         file_groups.insert(create_id(name)?, group);
@@ -150,7 +150,7 @@ impl NxMigrator {
                 let file_groups = config.file_groups.get_or_insert(FxHashMap::default());
 
                 for (name, raw_inputs) in named_inputs {
-                    let group = migrate_inputs(&raw_inputs)?;
+                    let group = migrate_inputs(&raw_inputs, true)?;
 
                     if !group.is_empty() {
                         file_groups.insert(create_id(name)?, group);
@@ -218,11 +218,12 @@ impl NxMigrator {
 }
 
 fn is_path_or_glob(value: &str) -> bool {
-    value.contains('/')
+    (value.contains('/')
         || value.contains('*')
         || value.contains('.')
         || value.contains('{')
-        || value.starts_with('!')
+        || value.starts_with('!'))
+        && !value.starts_with("http")
 }
 
 fn replace_tokens(value: &str, for_sources: bool) -> String {
@@ -255,7 +256,7 @@ fn replace_tokens(value: &str, for_sources: bool) -> String {
     result
 }
 
-fn migrate_inputs(raw_inputs: &[NxInput]) -> AnyResult<Vec<InputPath>> {
+fn migrate_inputs(raw_inputs: &[NxInput], for_file_groups: bool) -> AnyResult<Vec<InputPath>> {
     let mut inputs = vec![];
 
     for input in raw_inputs {
@@ -284,7 +285,7 @@ fn migrate_inputs(raw_inputs: &[NxInput]) -> AnyResult<Vec<InputPath>> {
                     inputs.push(InputPath::from_str(&replace_tokens(source, true))?);
                 }
                 // Named input
-                else if !source.starts_with('^') {
+                else if !source.starts_with('^') && !for_file_groups {
                     inputs.push(InputPath::TokenFunc(format!("@group({source})")));
                 }
             }
@@ -302,13 +303,36 @@ fn migrate_options_to_args(options: &FxHashMap<String, JsonValue>) -> Vec<String
             continue;
         }
 
-        args.push(format!("--{key}"));
-        args.push(match value {
-            JsonValue::Bool(value) => if *value { "true" } else { "false" }.into(),
-            JsonValue::Number(value) => value.to_string(),
-            JsonValue::String(value) => replace_tokens(value, false),
-            _ => value.to_string(),
-        });
+        match value {
+            JsonValue::Bool(value) => {
+                if *value {
+                    args.push(format!("--{key}"));
+                } else {
+                    args.push(format!("--no-{key}"));
+                }
+            }
+            JsonValue::Number(value) => {
+                args.push(format!("--{key}"));
+                args.push(value.to_string()); // Avoids quotes
+            }
+            JsonValue::String(value) => {
+                args.push(format!("--{key}"));
+
+                // All Nx options are workspace relative, not project relative,
+                // so let's prepend with a token to ensure that it works!
+                let value = replace_tokens(value, false);
+
+                args.push(if is_path_or_glob(&value) && !value.starts_with('$') {
+                    format!("$workspaceRoot/{}", value.trim_start_matches('/'))
+                } else {
+                    value
+                });
+            }
+            inner => {
+                args.push(format!("--{key}"));
+                args.push(inner.to_string());
+            }
+        }
     }
 
     args
@@ -413,7 +437,7 @@ fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
     // - https://nx.dev/recipes/running-tasks/configure-inputs
     // - https://nx.dev/reference/inputs
     if let Some(raw_inputs) = &nx_target.inputs {
-        inputs.extend(migrate_inputs(raw_inputs)?);
+        inputs.extend(migrate_inputs(raw_inputs, false)?);
     }
 
     if !inputs.is_empty() {

@@ -1,0 +1,23 @@
+---
+source: crates/migrate-nx/tests/migrate_nx_test.rs
+expression: "fs::read_to_string(sandbox.path().join(\"bar/moon.yml\")).unwrap()"
+---
+language: javascript
+platform: node
+tasks:
+  build:
+    command: moon-nx execute @nx/webpack:webpack
+    args:
+    - --outputPath
+    - $workspaceRoot/dist/bar
+  echo:
+    command: echo 'hello world'
+    platform: system
+  test:
+    command: moon-nx execute @nx/jest:jest
+    args:
+    - --concurrency
+    - '5'
+    - --passWithNoTests
+type: application
+

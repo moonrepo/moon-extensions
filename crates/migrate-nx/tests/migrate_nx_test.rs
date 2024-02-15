@@ -24,7 +24,7 @@ mod migrate_nx {
         assert_snapshot!(fs::read_to_string(sandbox.path().join(".moon/workspace.yml")).unwrap());
     }
 
-    mod projects {
+    mod workspace_projects {
         use super::*;
 
         #[test]
@@ -66,6 +66,33 @@ mod migrate_nx {
             assert_snapshot!(
                 fs::read_to_string(sandbox.path().join(".moon/workspace.yml")).unwrap()
             );
+        }
+    }
+
+    mod projects {
+        use super::*;
+
+        #[test]
+        fn converts_project_json() {
+            let sandbox = create_sandbox("projects");
+            let plugin = create_extension("test", sandbox.path());
+
+            plugin.execute_extension(ExecuteExtensionInput {
+                args: vec![],
+                context: plugin.create_context(sandbox.path()),
+            });
+
+            assert!(!sandbox.path().join("nx.json").exists());
+            assert!(!sandbox.path().join("bar/project.json").exists());
+            assert!(!sandbox.path().join("baz/project.json").exists());
+            assert!(!sandbox.path().join("foo/project.json").exists());
+            assert!(sandbox.path().join("bar/moon.yml").exists());
+            assert!(sandbox.path().join("baz/moon.yml").exists());
+            assert!(sandbox.path().join("foo/moon.yml").exists());
+
+            assert_snapshot!(fs::read_to_string(sandbox.path().join("bar/moon.yml")).unwrap());
+            assert_snapshot!(fs::read_to_string(sandbox.path().join("baz/moon.yml")).unwrap());
+            assert_snapshot!(fs::read_to_string(sandbox.path().join("foo/moon.yml")).unwrap());
         }
     }
 }

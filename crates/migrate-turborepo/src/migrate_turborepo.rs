@@ -20,7 +20,7 @@ extern "ExtismHost" {
 
 #[derive(Args)]
 pub struct MigrateTurborepoExtensionArgs {
-    #[arg(long, short = 'd')]
+    #[arg(long)]
     pub bun: bool,
 }
 
