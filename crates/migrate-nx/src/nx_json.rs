@@ -9,14 +9,14 @@ use starbase_utils::json::JsonValue;
 /// anything else is ignored!
 
 #[derive(Deserialize)]
-#[serde(untagged, rename_all = "kebab-case")]
+#[serde(untagged)]
 pub enum StringOrList {
     List(Vec<String>),
     String(String),
 }
 
 #[derive(Deserialize)]
-#[serde(untagged, rename_all = "kebab-case")]
+#[serde(untagged)]
 pub enum NxDependsOn {
     Object {
         dependencies: Option<bool>,
@@ -28,17 +28,19 @@ pub enum NxDependsOn {
 }
 
 #[derive(Deserialize)]
-#[serde(untagged, rename_all = "kebab-case")]
+#[serde(untagged)]
 pub enum NxInput {
     Dep {
         dependencies: Option<bool>,
         projects: Option<StringOrList>,
         input: String,
     },
+    #[serde(rename_all = "camelCase")]
     DepOutput {
         dependent_tasks_output_files: String,
         transitive: Option<bool>,
     },
+    #[serde(rename_all = "camelCase")]
     External {
         external_dependencies: Vec<String>,
     },

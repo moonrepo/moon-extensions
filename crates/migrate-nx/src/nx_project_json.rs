@@ -9,6 +9,7 @@ use std::path::PathBuf;
 #[serde(rename_all = "camelCase")]
 pub struct NxProjectJson {
     pub implicit_dependencies: Option<Vec<String>>,
+    pub name: Option<String>,
     pub named_inputs: Option<NxNamedInputs>,
     pub project_type: Option<String>,
     pub root: Option<PathBuf>,

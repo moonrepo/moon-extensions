@@ -135,6 +135,10 @@ impl NxMigrator {
     ) -> AnyResult<()> {
         let config = self.inner.load_project_config(project_source)?;
 
+        if let Some(name) = project_json.name {
+            config.id = Some(create_id(name)?);
+        }
+
         if let Some(implicit_dependencies) = project_json.implicit_dependencies {
             if !implicit_dependencies.is_empty() {
                 let depends_on = config.depends_on.get_or_insert(vec![]);
@@ -243,7 +247,7 @@ fn replace_tokens(value: &str, for_sources: bool) -> String {
 
     if for_sources {
         if result.starts_with("!{workspaceRoot}/") {
-            result = result.replacen("{workspaceRoot}/", "!/", 1);
+            result = result.replacen("!{workspaceRoot}/", "!/", 1);
         }
 
         if result.starts_with("{workspaceRoot}/") {
@@ -295,6 +299,8 @@ fn migrate_inputs(raw_inputs: &[NxInput], for_file_groups: bool) -> AnyResult<Ve
     Ok(inputs)
 }
 
+// We'll parse these arguments back into an object using `yargs-parser`:
+// https://www.npmjs.com/package/yargs-parser
 fn migrate_options_to_args(options: &FxHashMap<String, JsonValue>) -> Vec<String> {
     let mut args = vec![];
 

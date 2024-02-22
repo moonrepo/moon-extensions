@@ -24,6 +24,28 @@ mod migrate_nx {
         assert_snapshot!(fs::read_to_string(sandbox.path().join(".moon/workspace.yml")).unwrap());
     }
 
+    mod nx_json {
+        use super::*;
+
+        #[test]
+        fn converts_named_inputs() {
+            let sandbox = create_sandbox("root-inputs");
+            let plugin = create_extension("test", sandbox.path());
+
+            plugin.execute_extension(ExecuteExtensionInput {
+                args: vec![],
+                context: plugin.create_context(sandbox.path()),
+            });
+
+            assert!(!sandbox.path().join("nx.json").exists());
+            assert!(sandbox.path().join(".moon/tasks/node.yml").exists());
+
+            assert_snapshot!(
+                fs::read_to_string(sandbox.path().join(".moon/tasks/node.yml")).unwrap()
+            );
+        }
+    }
+
     mod workspace_projects {
         use super::*;
 
