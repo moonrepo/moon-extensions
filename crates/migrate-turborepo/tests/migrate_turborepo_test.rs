@@ -111,7 +111,7 @@ mod migrate_turborepo {
     }
 
     #[test]
-    #[should_panic(expected = "Unable to migrate task for package client.")]
+    #[should_panic(expected = "Unable to migrate task as package client does not exist.")]
     fn errors_if_a_task_points_to_an_unknown_project() {
         let sandbox = create_sandbox("error-missing-project");
         let plugin = create_extension("test", sandbox.path());
@@ -123,7 +123,7 @@ mod migrate_turborepo {
     }
 
     #[test]
-    #[should_panic(expected = "Unable to migrate task for package client.")]
+    #[should_panic(expected = "Unable to migrate task as package client does not exist.")]
     fn errors_if_a_dependson_points_to_an_unknown_project() {
         let sandbox = create_sandbox("error-missing-project-deps");
         let plugin = create_extension("test", sandbox.path());

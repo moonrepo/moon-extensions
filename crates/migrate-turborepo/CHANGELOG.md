@@ -1,3 +1,10 @@
+## 0.1.0
+
+#### 🚀 Updates
+
+- Removed the requirement of moon's project graph. Will now scan for `turbo.json`s instead.
+- Cleaned up the migration code to be more readable and maintainable.
+
 ## 0.0.2
 
 #### 🚀 Updates

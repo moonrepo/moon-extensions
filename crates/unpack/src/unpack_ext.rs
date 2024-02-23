@@ -1,5 +1,6 @@
 use extism_pdk::*;
 use moon_extension_common::download::download_from_url;
+use moon_extension_common::format_virtual_path;
 use moon_pdk::*;
 use starbase_archive::Archiver;
 use std::fs;
@@ -53,14 +54,14 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     if !src_file.exists() || !src_file.is_file() {
         return Err(plugin_err!(
             "Source <path>{}</path> must be a valid file.",
-            src_file.real_path().display(),
+            format_virtual_path(&src_file),
         ));
     }
 
     host_log!(
         stdout,
         "Opening archive <path>{}</path>",
-        src_file.real_path().display()
+        format_virtual_path(&src_file),
     );
 
     // Convert the provided output into a virtual file path.
@@ -74,7 +75,7 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     if dest_dir.exists() && dest_dir.is_file() {
         return Err(plugin_err!(
             "Destination <path>{}</path> must be a directory, found a file.",
-            dest_dir.real_path().display(),
+            format_virtual_path(&dest_dir),
         ));
     }
 
@@ -83,7 +84,7 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
     host_log!(
         stdout,
         "Unpacking archive to <path>{}</path>",
-        dest_dir.real_path().display()
+        format_virtual_path(&dest_dir),
     );
 
     // Attempt to unpack the archive!

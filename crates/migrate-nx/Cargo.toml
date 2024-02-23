@@ -1,6 +1,6 @@
 [package]
-name = "moon_migrate_turborepo_extension"
-version = "0.0.2"
+name = "moon_migrate_nx_extension"
+version = "0.0.0"
 edition = "2021"
 license = "MIT"
 publish = false
@@ -22,7 +22,7 @@ moon_pdk = { workspace = true }
 moon_target = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
-starbase_utils = { workspace = true, features = ["glob", "json", "yaml"] }
+starbase_utils = { workspace = true, features = ["json", "yaml"] }
 
 [dev-dependencies]
 moon_pdk_test_utils = { workspace = true }
