@@ -1,6 +1,5 @@
 use crate::nx_migrator::NxMigrator;
 use extism_pdk::*;
-use moon_config::PlatformType;
 use moon_pdk::*;
 use starbase_utils::{fs, glob, json};
 
@@ -19,11 +18,7 @@ pub struct MigrateNxExtensionArgs {
 pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<()> {
     let args = parse_args::<MigrateNxExtensionArgs>(&input.args)?;
     let workspace_root = &input.context.workspace_root;
-    let mut migrator = NxMigrator::new(&input.context)?;
-
-    if args.bun {
-        migrator.inner.platform = PlatformType::Bun;
-    }
+    let mut migrator = NxMigrator::new(&input.context, args.bun)?;
 
     // Migrate the workspace config first, so we can handle projects
     let workspace_config_path = workspace_root.join("workspace.json");

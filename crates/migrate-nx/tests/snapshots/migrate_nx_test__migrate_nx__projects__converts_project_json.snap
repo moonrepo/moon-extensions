@@ -6,15 +6,14 @@ language: javascript
 platform: node
 tasks:
   build:
-    command: moon-nx execute @nx/webpack:webpack
+    command: webpack
     args:
     - --outputPath
     - $workspaceRoot/dist/bar
   echo:
     command: echo 'hello world'
-    platform: system
   test:
-    command: moon-nx execute @nx/jest:jest
+    command: jest
     args:
     - --concurrency
     - '5'

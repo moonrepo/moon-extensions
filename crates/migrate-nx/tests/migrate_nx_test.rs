@@ -24,6 +24,22 @@ mod migrate_nx {
         assert_snapshot!(fs::read_to_string(sandbox.path().join(".moon/workspace.yml")).unwrap());
     }
 
+    #[test]
+    fn converts_nx_builtin_executors() {
+        let sandbox = create_sandbox("nx-executors");
+        let plugin = create_extension("test", sandbox.path());
+
+        plugin.execute_extension(ExecuteExtensionInput {
+            args: vec![],
+            context: plugin.create_context(sandbox.path()),
+        });
+
+        assert!(!sandbox.path().join("project.json").exists());
+        assert!(sandbox.path().join("moon.yml").exists());
+
+        assert_snapshot!(fs::read_to_string(sandbox.path().join("moon.yml")).unwrap());
+    }
+
     mod nx_json {
         use super::*;
 

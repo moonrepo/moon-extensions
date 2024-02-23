@@ -30,15 +30,9 @@ pub struct TurboMigrator {
 impl TurboMigrator {
     pub fn new(context: &MoonContext, bun: bool) -> AnyResult<Self> {
         let mut migrator = Migrator::new(&context.workspace_root)?;
-        let mut package_manager = "npm";
 
-        if bun || context.workspace_root.join("bun.lockb").exists() {
+        if bun {
             migrator.platform = PlatformType::Bun;
-            package_manager = "bun";
-        } else if context.workspace_root.join("pnpm-lock.yaml").exists() {
-            package_manager = "pnpm";
-        } else if context.workspace_root.join("yarn.lock").exists() {
-            package_manager = "yarn";
         }
 
         // Load current packages
@@ -69,8 +63,8 @@ impl TurboMigrator {
         }
 
         Ok(Self {
+            package_manager: migrator.detect_package_manager(),
             inner: migrator,
-            package_manager: package_manager.to_owned(),
             package_globs,
             packages,
         })

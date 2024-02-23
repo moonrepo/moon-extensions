@@ -12,7 +12,7 @@ language: javascript
 platform: node
 tasks:
   build:
-    command: moon-nx execute @nx/js:tsc
+    command: js tsc
     args:
     - --tsConfig
     - $workspaceRoot/baz/tsconfig.lib.json

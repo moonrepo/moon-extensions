@@ -6,7 +6,7 @@ language: javascript
 platform: node
 tasks:
   build:
-    command: moon-nx execute @nx/esbuild:esbuild
+    command: esbuild
     args:
     - --tsConfig
     - $workspaceRoot/app/tsconfig.app.json
@@ -15,20 +15,17 @@ tasks:
     - --main
     - app
   create-script:
-    command: moon-nx execute nx:run-commands
-    args:
-    - --commands
-    - '["mkdir -p apps/frontend/scripts","touch apps/frontend/scripts/my-script.sh","chmod +x apps/frontend/scripts/my-script.sh"]'
-    - --no-parallel
+    command: mkdir -p apps/frontend/scripts && touch apps/frontend/scripts/my-script.sh && chmod +x apps/frontend/scripts/my-script.sh
+    platform: system
   dev:
-    command: moon-nx execute @nx/next:server
+    command: next server
     args:
     - --buildTarget
     - acme:build
     - --no-turbo
     - --dev
   e2e:
-    command: moon-nx execute @nx/cypress:cypress
+    command: cypress
     args:
     - --cypressConfig
     - $workspaceRoot/apps/app-e2e/cypres.config.ts
@@ -37,19 +34,14 @@ tasks:
     - --testingType
     - e2e
   ls-project-root:
-    command: moon-nx execute nx:run-commands
-    args:
-    - --command
-    - $workspaceRoot/ls apps/frontend/src
+    command: ls apps/frontend/src
+    platform: system
   noop:
-    command: moon-nx execute nx:noop
+    command: noop
   run-script:
-    command: moon-nx execute nx:run-script
-    args:
-    - --script
-    - build-my-project
+    command: npm run build-my-project
   serve:
-    command: moon-nx execute @nx/angular:dev-server
+    command: angular dev-server
   serve.development:
     extends: serve
     args:
@@ -61,7 +53,7 @@ tasks:
     - --buildTarget
     - my-app:build:production
   test:
-    command: moon-nx execute @nx/jest:jest
+    command: jest
     args:
     - --jestConfig
     - $workspaceRoot/libs/my-lib/jest.config.ts

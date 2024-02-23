@@ -13,7 +13,7 @@
       "defaultConfiguration": "development"
     },
     "e2e": {
-      "executor": "@nx/cypress:cypress",
+      "executor": "cypress:cypress",
       "options": {
         "cypressConfig": "apps/app-e2e/cypres.config.ts",
         "devServerTarget": "my-react-app:serve",
@@ -29,7 +29,7 @@
       }
     },
     "test": {
-      "executor": "@nx/jest:jest",
+      "executor": "@scope/jest:jest",
       "options": {
         "jestConfig": "libs/my-lib/jest.config.ts",
         "passWithNoTests": true

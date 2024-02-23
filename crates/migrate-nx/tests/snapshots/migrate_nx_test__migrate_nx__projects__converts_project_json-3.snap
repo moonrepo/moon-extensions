@@ -8,7 +8,7 @@ language: javascript
 platform: node
 tasks:
   e2e:
-    command: moon-nx execute @nx/cypress:cypress
+    command: cypress
     args:
     - --cypressConfig
     - $workspaceRoot/foo/cypress.config.ts

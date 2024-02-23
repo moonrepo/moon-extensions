@@ -28,6 +28,20 @@ impl Migrator {
         })
     }
 
+    pub fn detect_package_manager(&self) -> String {
+        let mut package_manager = "npm";
+
+        if self.root.join("bun.lockb").exists() || matches!(self.platform, PlatformType::Bun) {
+            package_manager = "bun";
+        } else if self.root.join("pnpm-lock.yaml").exists() {
+            package_manager = "pnpm";
+        } else if self.root.join("yarn.lock").exists() {
+            package_manager = "yarn";
+        }
+
+        package_manager.to_owned()
+    }
+
     pub fn load_project_config(
         &mut self,
         project_source: &str,

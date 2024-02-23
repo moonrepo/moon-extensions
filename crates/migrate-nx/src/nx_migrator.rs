@@ -1,5 +1,8 @@
 use crate::nx_json::*;
 use crate::nx_project_json::*;
+use moon_config::FilePath;
+use moon_config::PortablePath;
+use moon_config::TaskOptionEnvFile;
 use moon_config::{
     InputPath, OutputPath, PartialProjectDependsOn, PartialTaskArgs, PartialTaskConfig,
     PartialTaskDependency, PartialTaskOptionsConfig, PartialVcsConfig, PartialWorkspaceProjects,
@@ -15,12 +18,20 @@ use std::str::FromStr;
 
 pub struct NxMigrator {
     pub inner: Migrator,
+    pub package_manager: String,
 }
 
 impl NxMigrator {
-    pub fn new(context: &MoonContext) -> AnyResult<Self> {
+    pub fn new(context: &MoonContext, bun: bool) -> AnyResult<Self> {
+        let mut migrator = Migrator::new(&context.workspace_root)?;
+
+        if bun {
+            migrator.platform = PlatformType::Bun;
+        }
+
         Ok(Self {
-            inner: Migrator::new(&context.workspace_root)?,
+            package_manager: migrator.detect_package_manager(),
+            inner: migrator,
         })
     }
 
@@ -95,7 +106,10 @@ impl NxMigrator {
                 .get_or_insert(BTreeMap::default());
 
             for (name, target_config) in target_defaults {
-                tasks.insert(create_id(name)?, migrate_task(&target_config)?);
+                tasks.insert(
+                    create_id(name)?,
+                    migrate_task(&target_config, &self.package_manager)?,
+                );
             }
         }
 
@@ -185,7 +199,10 @@ impl NxMigrator {
             for (name, target) in targets {
                 let task_id = create_id(name)?;
 
-                tasks.insert(task_id.clone(), migrate_task(&target)?);
+                tasks.insert(
+                    task_id.clone(),
+                    migrate_task(&target, &self.package_manager)?,
+                );
 
                 // https://nx.dev/concepts/executors-and-configurations#use-task-configurations
                 if let Some(configurations) = target.configurations {
@@ -228,6 +245,7 @@ fn is_path_or_glob(value: &str) -> bool {
         || value.contains('{')
         || value.starts_with('!'))
         && !value.starts_with("http")
+        && !value.contains(' ')
 }
 
 fn replace_tokens(value: &str, for_sources: bool) -> String {
@@ -299,6 +317,14 @@ fn migrate_inputs(raw_inputs: &[NxInput], for_file_groups: bool) -> AnyResult<Ve
     Ok(inputs)
 }
 
+fn convert_value_to_string_without_quotes(value: &JsonValue) -> String {
+    value
+        .to_string()
+        .trim_start_matches('"')
+        .trim_end_matches('"')
+        .to_owned()
+}
+
 // We'll parse these arguments back into an object using `yargs-parser`:
 // https://www.npmjs.com/package/yargs-parser
 fn migrate_options_to_args(options: &FxHashMap<String, JsonValue>) -> Vec<String> {
@@ -317,10 +343,6 @@ fn migrate_options_to_args(options: &FxHashMap<String, JsonValue>) -> Vec<String
                     args.push(format!("--no-{key}"));
                 }
             }
-            JsonValue::Number(value) => {
-                args.push(format!("--{key}"));
-                args.push(value.to_string()); // Avoids quotes
-            }
             JsonValue::String(value) => {
                 args.push(format!("--{key}"));
 
@@ -336,7 +358,7 @@ fn migrate_options_to_args(options: &FxHashMap<String, JsonValue>) -> Vec<String
             }
             inner => {
                 args.push(format!("--{key}"));
-                args.push(inner.to_string());
+                args.push(convert_value_to_string_without_quotes(inner));
             }
         }
     }
@@ -344,24 +366,7 @@ fn migrate_options_to_args(options: &FxHashMap<String, JsonValue>) -> Vec<String
     args
 }
 
-fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
-    let mut config = PartialTaskConfig::default();
-    let mut inputs = vec![];
-
-    config.command = Some(PartialTaskArgs::String(
-        nx_target
-            .command
-            .clone()
-            .or_else(|| {
-                nx_target
-                    .executor
-                    .as_ref()
-                    .map(|e| format!("moon-nx execute {e}"))
-            })
-            .unwrap_or("noop".into()),
-    ));
-
-    // Arguments
+fn inject_args_into_task(nx_target: &NxTargetOptions, config: &mut PartialTaskConfig) {
     // This is a bit complicated, since moon doesn't have a concept of arbitrary
     // options, but in Nx, options can also be passed as command line args,
     // so let's replicate that and hope it works correctly!
@@ -371,6 +376,138 @@ fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
         if !args.is_empty() {
             config.args = Some(PartialTaskArgs::List(args));
         }
+    }
+}
+
+// https://nx.dev/nx-api/nx/executors/noop
+fn migrate_noop_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
+    let mut config = PartialTaskConfig::default();
+
+    config.command = Some(PartialTaskArgs::String("noop".into()));
+
+    inject_args_into_task(nx_target, &mut config);
+
+    Ok(config)
+}
+
+// https://nx.dev/nx-api/nx/executors/run-commands
+fn migrate_run_commands_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
+    let mut config = PartialTaskConfig::default();
+
+    config.platform = Some(PlatformType::System);
+
+    // https://nx.dev/nx-api/nx/executors/run-commands#options
+    if let Some(options) = &nx_target.options {
+        if let Some(JsonValue::String(command)) = options.get("command") {
+            config.command = Some(PartialTaskArgs::String(command.to_owned()));
+        } else if let Some(JsonValue::Array(commands)) = options.get("commands") {
+            config.command = Some(PartialTaskArgs::String(
+                commands
+                    .iter()
+                    .map(convert_value_to_string_without_quotes)
+                    .collect::<Vec<_>>()
+                    .join(" && "),
+            ));
+        }
+
+        if let Some(JsonValue::String(cwd)) = options.get("cwd") {
+            config
+                .env
+                .get_or_insert(FxHashMap::default())
+                .insert("CWD".into(), cwd.to_owned());
+        }
+
+        if let Some(JsonValue::Object(envs)) = options.get("env") {
+            let env = config.env.get_or_insert(FxHashMap::default());
+
+            for (key, value) in envs {
+                env.insert(
+                    key.to_owned(),
+                    convert_value_to_string_without_quotes(value),
+                );
+            }
+        }
+
+        if let Some(JsonValue::String(env_file)) = options.get("envFile") {
+            config
+                .options
+                .get_or_insert(PartialTaskOptionsConfig::default())
+                .env_file = Some(TaskOptionEnvFile::File(FilePath::from_str(env_file)?));
+        }
+    }
+
+    if config.command.is_none() {
+        config.command = Some(PartialTaskArgs::String("noop".into()));
+    }
+
+    Ok(config)
+}
+
+// https://nx.dev/nx-api/nx/executors/run-script
+fn migrate_run_script_task(
+    nx_target: &NxTargetOptions,
+    package_manager: &str,
+) -> AnyResult<PartialTaskConfig> {
+    let mut config = PartialTaskConfig::default();
+
+    if let Some(options) = &nx_target.options {
+        if let Some(JsonValue::String(script)) = options.get("script") {
+            config.command = Some(PartialTaskArgs::String(format!(
+                "{package_manager} run {script}"
+            )));
+        }
+    }
+
+    Ok(config)
+}
+
+fn migrate_task(
+    nx_target: &NxTargetOptions,
+    package_manager: &str,
+) -> AnyResult<PartialTaskConfig> {
+    let mut inject_args = false;
+
+    let mut config = if let Some(executor) = &nx_target.executor {
+        if executor == "nx:noop" {
+            migrate_noop_task(nx_target)?
+        } else if executor == "nx:run-commands" {
+            migrate_run_commands_task(nx_target)?
+        } else if executor == "nx:run-script" {
+            migrate_run_script_task(nx_target, package_manager)?
+        } else {
+            let mut parts = executor.splitn(2, ':');
+            let mut package = parts.next().unwrap_or_default();
+            let target = parts.next().unwrap_or_default();
+
+            if let Some(index) = package.find('/') {
+                package = &package[index + 1..];
+            }
+
+            let mut config = PartialTaskConfig::default();
+
+            config.command = Some(PartialTaskArgs::String(if package == target {
+                target.to_owned()
+            } else {
+                format!("{package} {target}")
+            }));
+
+            inject_args = true;
+            config
+        }
+    } else {
+        let mut config = PartialTaskConfig::default();
+
+        if let Some(command) = &nx_target.command {
+            config.command = Some(PartialTaskArgs::String(command.to_owned()));
+        }
+
+        inject_args = true;
+        config
+    };
+
+    // Arguments
+    if inject_args {
+        inject_args_into_task(nx_target, &mut config);
     }
 
     // Dependencies
@@ -442,6 +579,8 @@ fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
     // Inputs
     // - https://nx.dev/recipes/running-tasks/configure-inputs
     // - https://nx.dev/reference/inputs
+    let mut inputs = vec![];
+
     if let Some(raw_inputs) = &nx_target.inputs {
         inputs.extend(migrate_inputs(raw_inputs, false)?);
     }
@@ -462,10 +601,6 @@ fn migrate_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
         if !outputs.is_empty() {
             config.outputs = Some(outputs);
         }
-    }
-
-    if nx_target.command.is_some() {
-        config.platform = Some(PlatformType::System);
     }
 
     if nx_target.cache == Some(true) {

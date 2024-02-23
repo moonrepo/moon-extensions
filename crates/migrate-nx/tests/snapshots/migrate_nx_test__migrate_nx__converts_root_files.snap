@@ -11,7 +11,7 @@ fileGroups:
   - /static
 tasks:
   build:
-    command: moon-nx execute @nrwl/js:tsc
+    command: js tsc
     args:
     - --main
     - $projectRoot/src/index.ts
