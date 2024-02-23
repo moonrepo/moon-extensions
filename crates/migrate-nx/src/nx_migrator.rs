@@ -164,9 +164,9 @@ impl NxMigrator {
         }
 
         if let Some(project_type) = project_json.project_type {
-            if project_type == "library" {
+            if project_type == "library" || project_type == "lib" {
                 config.type_of = Some(ProjectType::Library);
-            } else if project_type == "application" {
+            } else if project_type == "application" || project_type == "app" {
                 config.type_of = Some(ProjectType::Application);
             }
         }

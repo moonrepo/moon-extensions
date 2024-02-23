@@ -116,5 +116,74 @@ mod migrate_nx {
             assert_snapshot!(fs::read_to_string(sandbox.path().join("baz/moon.yml")).unwrap());
             assert_snapshot!(fs::read_to_string(sandbox.path().join("foo/moon.yml")).unwrap());
         }
+
+        #[test]
+        fn converts_name_and_implicit_deps() {
+            let sandbox = create_sandbox("project-name-deps");
+            let plugin = create_extension("test", sandbox.path());
+
+            dbg!(sandbox.path());
+
+            plugin.execute_extension(ExecuteExtensionInput {
+                args: vec![],
+                context: plugin.create_context(sandbox.path()),
+            });
+
+            assert!(!sandbox.path().join("project.json").exists());
+            assert!(sandbox.path().join("moon.yml").exists());
+
+            assert_snapshot!(fs::read_to_string(sandbox.path().join("moon.yml")).unwrap());
+        }
+
+        #[test]
+        fn converts_type_and_tags() {
+            let sandbox = create_sandbox("project-type-tags");
+            let plugin = create_extension("test", sandbox.path());
+
+            plugin.execute_extension(ExecuteExtensionInput {
+                args: vec![],
+                context: plugin.create_context(sandbox.path()),
+            });
+
+            assert!(!sandbox.path().join("app/project.json").exists());
+            assert!(!sandbox.path().join("lib/project.json").exists());
+            assert!(sandbox.path().join("app/moon.yml").exists());
+            assert!(sandbox.path().join("lib/moon.yml").exists());
+
+            assert_snapshot!(fs::read_to_string(sandbox.path().join("app/moon.yml")).unwrap());
+            assert_snapshot!(fs::read_to_string(sandbox.path().join("lib/moon.yml")).unwrap());
+        }
+
+        #[test]
+        fn converts_named_inputs() {
+            let sandbox = create_sandbox("project-inputs");
+            let plugin = create_extension("test", sandbox.path());
+
+            plugin.execute_extension(ExecuteExtensionInput {
+                args: vec![],
+                context: plugin.create_context(sandbox.path()),
+            });
+
+            assert!(!sandbox.path().join("project.json").exists());
+            assert!(sandbox.path().join("moon.yml").exists());
+
+            assert_snapshot!(fs::read_to_string(sandbox.path().join("moon.yml")).unwrap());
+        }
+
+        #[test]
+        fn converts_targets() {
+            let sandbox = create_sandbox("project-targets");
+            let plugin = create_extension("test", sandbox.path());
+
+            plugin.execute_extension(ExecuteExtensionInput {
+                args: vec![],
+                context: plugin.create_context(sandbox.path()),
+            });
+
+            assert!(!sandbox.path().join("project.json").exists());
+            assert!(sandbox.path().join("moon.yml").exists());
+
+            assert_snapshot!(fs::read_to_string(sandbox.path().join("moon.yml")).unwrap());
+        }
     }
 }

@@ -57,6 +57,9 @@ pub fn execute_extension(Json(input): Json<ExecuteExtensionInput>) -> FnResult<(
             "**/*/package.json",
             "**/*/project.json",
             "!**/node_modules/**/*",
+            // The globstar above won't find the root files for some reason...
+            "package.json",
+            "project.json",
         ],
     )? {
         let rel_config_path = project_config_path.strip_prefix(workspace_root).unwrap();

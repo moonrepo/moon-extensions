@@ -1,0 +1,69 @@
+---
+source: crates/migrate-nx/tests/migrate_nx_test.rs
+expression: "fs::read_to_string(sandbox.path().join(\"moon.yml\")).unwrap()"
+---
+language: javascript
+platform: node
+tasks:
+  build:
+    command: moon-nx execute @nx/esbuild:esbuild
+    args:
+    - --tsConfig
+    - $workspaceRoot/app/tsconfig.app.json
+    - --outputPath
+    - $workspaceRoot/dist/app
+    - --main
+    - app
+  create-script:
+    command: moon-nx execute nx:run-commands
+    args:
+    - --commands
+    - '["mkdir -p apps/frontend/scripts","touch apps/frontend/scripts/my-script.sh","chmod +x apps/frontend/scripts/my-script.sh"]'
+    - --no-parallel
+  dev:
+    command: moon-nx execute @nx/next:server
+    args:
+    - --buildTarget
+    - acme:build
+    - --no-turbo
+    - --dev
+  e2e:
+    command: moon-nx execute @nx/cypress:cypress
+    args:
+    - --cypressConfig
+    - $workspaceRoot/apps/app-e2e/cypres.config.ts
+    - --devServerTarget
+    - my-react-app:serve
+    - --testingType
+    - e2e
+  ls-project-root:
+    command: moon-nx execute nx:run-commands
+    args:
+    - --command
+    - $workspaceRoot/ls apps/frontend/src
+  noop:
+    command: moon-nx execute nx:noop
+  run-script:
+    command: moon-nx execute nx:run-script
+    args:
+    - --script
+    - build-my-project
+  serve:
+    command: moon-nx execute @nx/angular:dev-server
+  serve.development:
+    extends: serve
+    args:
+    - --buildTarget
+    - my-app:build:development
+  serve.production:
+    extends: serve
+    args:
+    - --buildTarget
+    - my-app:build:production
+  test:
+    command: moon-nx execute @nx/jest:jest
+    args:
+    - --jestConfig
+    - $workspaceRoot/libs/my-lib/jest.config.ts
+    - --passWithNoTests
+
