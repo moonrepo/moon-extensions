@@ -1685,7 +1685,7 @@ dependencies = [
 
 [[package]]
 name = "moon_download_extension"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "extism-pdk",
  "moon_extension_common",
@@ -1709,7 +1709,7 @@ dependencies = [
 
 [[package]]
 name = "moon_migrate_nx_extension"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "extism-pdk",
  "moon_common",
