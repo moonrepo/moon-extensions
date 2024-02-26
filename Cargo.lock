@@ -1726,7 +1726,7 @@ dependencies = [
 
 [[package]]
 name = "moon_migrate_turborepo_extension"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
  "extism-pdk",
  "moon_common",
