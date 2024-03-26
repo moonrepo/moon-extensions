@@ -136,5 +136,7 @@ impl Migrator {
 }
 
 pub fn create_id<T: AsRef<str>>(id: T) -> AnyResult<Id> {
-    Ok(Id::clean(id.as_ref().replace(':', "."))?)
+    Ok(Id::clean(
+        id.as_ref().replace(':', ".").trim_start_matches('@'),
+    )?)
 }
