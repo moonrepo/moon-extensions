@@ -1,5 +1,6 @@
 use crate::nx_json::*;
 use crate::nx_project_json::*;
+use moon_common::Id;
 use moon_config::FilePath;
 use moon_config::PortablePath;
 use moon_config::TaskOptionEnvFile;
@@ -43,17 +44,17 @@ impl NxMigrator {
 
             if !file_groups.contains_key("default") {
                 file_groups.insert(
-                    "default".into(),
+                    Id::raw("default"),
                     vec![InputPath::ProjectGlob("**/*".into())],
                 );
             }
 
             if !file_groups.contains_key("production") {
-                file_groups.insert("production".into(), vec![]);
+                file_groups.insert(Id::raw("production"), vec![]);
             }
 
             if !file_groups.contains_key("sharedGlobals") {
-                file_groups.insert("sharedGlobals".into(), vec![]);
+                file_groups.insert(Id::raw("sharedGlobals"), vec![]);
             }
         }
 
@@ -381,9 +382,10 @@ fn inject_args_into_task(nx_target: &NxTargetOptions, config: &mut PartialTaskCo
 
 // https://nx.dev/nx-api/nx/executors/noop
 fn migrate_noop_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
-    let mut config = PartialTaskConfig::default();
-
-    config.command = Some(PartialTaskArgs::String("noop".into()));
+    let mut config = PartialTaskConfig {
+        command: Some(PartialTaskArgs::String("noop".into())),
+        ..PartialTaskConfig::default()
+    };
 
     inject_args_into_task(nx_target, &mut config);
 
@@ -392,9 +394,10 @@ fn migrate_noop_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig
 
 // https://nx.dev/nx-api/nx/executors/run-commands
 fn migrate_run_commands_task(nx_target: &NxTargetOptions) -> AnyResult<PartialTaskConfig> {
-    let mut config = PartialTaskConfig::default();
-
-    config.platform = Some(PlatformType::System);
+    let mut config = PartialTaskConfig {
+        platform: Some(PlatformType::System),
+        ..PartialTaskConfig::default()
+    };
 
     // https://nx.dev/nx-api/nx/executors/run-commands#options
     if let Some(options) = &nx_target.options {
@@ -483,16 +486,16 @@ fn migrate_task(
                 package = &package[index + 1..];
             }
 
-            let mut config = PartialTaskConfig::default();
-
-            config.command = Some(PartialTaskArgs::String(if package == target {
-                target.to_owned()
-            } else {
-                format!("{package} {target}")
-            }));
-
             inject_args = true;
-            config
+
+            PartialTaskConfig {
+                command: Some(PartialTaskArgs::String(if package == target {
+                    target.to_owned()
+                } else {
+                    format!("{package} {target}")
+                })),
+                ..PartialTaskConfig::default()
+            }
         }
     } else {
         let mut config = PartialTaskConfig::default();
