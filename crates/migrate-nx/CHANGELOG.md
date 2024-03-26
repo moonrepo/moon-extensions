@@ -1,3 +1,9 @@
+## Unreleased
+
+#### 🐞 Fixes
+
+- Fixed invalid IDs when converting `package.json` names.
+
 ## 0.0.2
 
 #### 🚀 Updates
