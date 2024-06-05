@@ -2,6 +2,7 @@
 
 #### 🚀 Updates
 
+- Added support for Turborepo v2.
 - Updated dependencies.
 
 ## 0.1.0
