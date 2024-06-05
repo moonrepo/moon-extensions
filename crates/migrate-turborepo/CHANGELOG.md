@@ -1,3 +1,9 @@
+## Unreleased
+
+#### 🚀 Updates
+
+- Updated dependencies.
+
 ## 0.1.0
 
 #### 🚀 Updates
