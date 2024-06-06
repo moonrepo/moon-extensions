@@ -66,7 +66,7 @@ mod download {
         let file = sandbox.path().join("README.md");
 
         assert!(file.exists());
-        assert_eq!(fs::metadata(file).unwrap().len(), 4013);
+        assert_eq!(fs::metadata(file).unwrap().len(), 3891);
     }
 
     #[test]

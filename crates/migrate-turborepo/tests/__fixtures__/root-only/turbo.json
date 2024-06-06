@@ -9,7 +9,7 @@
     "test": {
       "dependsOn": ["build"],
       "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.ts"],
-      "outputMode": "full"
+      "outputLogs": "full"
     },
     "dev": {
       "cache": false,

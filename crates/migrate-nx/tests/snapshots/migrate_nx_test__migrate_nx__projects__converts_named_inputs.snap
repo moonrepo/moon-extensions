@@ -10,8 +10,8 @@ fileGroups:
   - '!**/*'
   - /**/*
   - '!/**/*'
-  - ./src/file.ts
-  - ./src/file.*
-  - ./src
+  - src/file.ts
+  - src/file.*
+  - src
 language: javascript
 platform: node
