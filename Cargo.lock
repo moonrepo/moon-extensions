@@ -1803,7 +1803,7 @@ dependencies = [
 
 [[package]]
 name = "moon_download_extension"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "extism-pdk",
  "moon_extension_common",
@@ -1814,7 +1814,7 @@ dependencies = [
 
 [[package]]
 name = "moon_extension_common"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "extism-pdk",
  "moon_common",
@@ -1827,7 +1827,7 @@ dependencies = [
 
 [[package]]
 name = "moon_migrate_nx_extension"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "extism-pdk",
  "moon_common",
@@ -1844,7 +1844,7 @@ dependencies = [
 
 [[package]]
 name = "moon_migrate_turborepo_extension"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "extism-pdk",
  "moon_common",
@@ -1915,7 +1915,7 @@ dependencies = [
 
 [[package]]
 name = "moon_unpack_extension"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "extism-pdk",
  "moon_extension_common",
