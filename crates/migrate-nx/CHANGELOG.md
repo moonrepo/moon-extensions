@@ -1,3 +1,9 @@
+## Unreleased
+
+#### ⚙️ Internal
+
+- Re-publish failed release.
+
 ## 0.0.4
 
 #### 🚀 Updates
