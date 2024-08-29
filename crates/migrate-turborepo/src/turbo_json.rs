@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 

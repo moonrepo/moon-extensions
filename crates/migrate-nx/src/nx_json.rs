@@ -1,6 +1,8 @@
 // https://nx.dev/reference/nx-json
 // https://github.com/nrwl/nx/blob/master/packages/nx/schemas/nx-schema.json
 
+#![allow(dead_code)]
+
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use starbase_utils::json::JsonValue;

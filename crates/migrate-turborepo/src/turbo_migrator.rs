@@ -146,7 +146,7 @@ impl TurboMigrator {
         turbo_json: TurboJson,
         from_source: Option<&str>,
     ) -> AnyResult<()> {
-        let Some(pipeline) = turbo_json.tasks.or_else(|| turbo_json.pipeline) else {
+        let Some(pipeline) = turbo_json.tasks.or(turbo_json.pipeline) else {
             return Ok(());
         };
 
@@ -312,7 +312,7 @@ impl TurboMigrator {
             });
         }
 
-        if let Some(output_mode) = &turbo_task.output_logs.or_else(|| turbo_task.output_mode) {
+        if let Some(output_mode) = turbo_task.output_logs.or(turbo_task.output_mode) {
             let output_style = match output_mode {
                 TurboOutputMode::HashOnly => Some(TaskOutputStyle::Hash),
                 TurboOutputMode::NewOnly => Some(TaskOutputStyle::Buffer),

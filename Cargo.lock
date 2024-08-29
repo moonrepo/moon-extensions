@@ -1843,6 +1843,7 @@ dependencies = [
  "serde",
  "starbase_sandbox",
  "starbase_utils",
+ "tokio",
 ]
 
 [[package]]
@@ -1860,6 +1861,7 @@ dependencies = [
  "serde",
  "starbase_sandbox",
  "starbase_utils",
+ "tokio",
 ]
 
 [[package]]
@@ -1928,6 +1930,7 @@ dependencies = [
  "moon_pdk_test_utils",
  "starbase_archive",
  "starbase_sandbox",
+ "tokio",
 ]
 
 [[package]]

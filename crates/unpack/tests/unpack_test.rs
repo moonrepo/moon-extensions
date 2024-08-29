@@ -4,64 +4,72 @@ use starbase_sandbox::create_empty_sandbox;
 mod unpack {
     use super::*;
 
-    #[test]
+    #[tokio::test]
     #[should_panic(expected = "the following required arguments were not provided")]
-    fn errors_if_no_args() {
+    async fn errors_if_no_args() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec![],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec![],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
     }
 
-    #[test]
+    #[tokio::test]
     #[should_panic(
         expected = "Invalid source, only .tar, .tar.gz, and .zip archives are supported."
     )]
-    fn errors_if_unsupported_ext() {
+    async fn errors_if_unsupported_ext() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec![
-                "--src".into(),
-                "https://raw.githubusercontent.com/moonrepo/moon/master/README.md".into(),
-            ],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec![
+                    "--src".into(),
+                    "https://raw.githubusercontent.com/moonrepo/moon/master/README.md".into(),
+                ],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
     }
 
-    #[test]
+    #[tokio::test]
     #[should_panic(expected = "must be a valid file")]
-    fn errors_if_src_file_missing() {
+    async fn errors_if_src_file_missing() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec!["--src".into(), "./some/archive.zip".into()],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec!["--src".into(), "./some/archive.zip".into()],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
     }
 
-    #[test]
+    #[tokio::test]
     #[should_panic(expected = "must be a directory, found a file")]
-    fn errors_if_dest_is_a_file() {
+    async fn errors_if_dest_is_a_file() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
 
         sandbox.create_file("dest", "file");
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec![
-                "--src".into(),
-                "https://github.com/moonrepo/moon/archive/refs/tags/v1.0.0.zip".into(),
-                "--dest".into(),
-                "./dest".into(),
-            ],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec![
+                    "--src".into(),
+                    "https://github.com/moonrepo/moon/archive/refs/tags/v1.0.0.zip".into(),
+                    "--dest".into(),
+                    "./dest".into(),
+                ],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
     }
 
     // #[test]
