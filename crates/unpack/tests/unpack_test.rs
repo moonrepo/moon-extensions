@@ -4,7 +4,7 @@ use starbase_sandbox::create_empty_sandbox;
 mod unpack {
     use super::*;
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "the following required arguments were not provided")]
     async fn errors_if_no_args() {
         let sandbox = create_empty_sandbox();
@@ -18,7 +18,7 @@ mod unpack {
             .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(
         expected = "Invalid source, only .tar, .tar.gz, and .zip archives are supported."
     )]
@@ -37,7 +37,7 @@ mod unpack {
             .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "must be a valid file")]
     async fn errors_if_src_file_missing() {
         let sandbox = create_empty_sandbox();
@@ -51,7 +51,7 @@ mod unpack {
             .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "must be a directory, found a file")]
     async fn errors_if_dest_is_a_file() {
         let sandbox = create_empty_sandbox();

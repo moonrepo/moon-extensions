@@ -5,7 +5,7 @@ use std::fs;
 mod download {
     use super::*;
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "the following required arguments were not provided")]
     async fn errors_if_no_args() {
         let sandbox = create_empty_sandbox();
@@ -19,7 +19,7 @@ mod download {
             .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "A valid URL is required for downloading.")]
     async fn errors_if_not_a_url() {
         let sandbox = create_empty_sandbox();
@@ -33,7 +33,7 @@ mod download {
             .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "must be a directory, found a file")]
     async fn errors_if_dest_is_a_file() {
         let sandbox = create_empty_sandbox();
@@ -54,7 +54,7 @@ mod download {
             .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn downloads_file() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
@@ -74,10 +74,10 @@ mod download {
         let file = sandbox.path().join("README.md");
 
         assert!(file.exists());
-        assert_eq!(fs::metadata(file).unwrap().len(), 3891);
+        assert_eq!(fs::metadata(file).unwrap().len(), 4107);
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn downloads_file_to_subdir() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
@@ -97,7 +97,7 @@ mod download {
         assert!(sandbox.path().join("sub/dir/README.md").exists());
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn downloads_file_with_custom_name() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());

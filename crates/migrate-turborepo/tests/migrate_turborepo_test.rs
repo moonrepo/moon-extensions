@@ -5,7 +5,7 @@ use std::fs;
 mod migrate_turborepo {
     use super::*;
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn converts_basic_root_file() {
         let sandbox = create_sandbox("root-only");
         let plugin = create_extension("test", sandbox.path());
@@ -23,7 +23,7 @@ mod migrate_turborepo {
         assert_snapshot!(fs::read_to_string(sandbox.path().join(".moon/tasks/node.yml")).unwrap());
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn converts_project_files() {
         let sandbox = create_sandbox("monorepo");
         let plugin = create_extension("test", sandbox.path());
@@ -47,7 +47,7 @@ mod migrate_turborepo {
         assert_snapshot!(fs::read_to_string(sandbox.path().join("server/moon.yml")).unwrap());
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn can_force_bun_instead_of_node() {
         let sandbox = create_sandbox("monorepo");
         let plugin = create_extension("test", sandbox.path());
@@ -72,7 +72,7 @@ mod migrate_turborepo {
         assert_snapshot!(fs::read_to_string(sandbox.path().join("server/moon.yml")).unwrap());
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn converts_to_a_root_project() {
         let sandbox = create_sandbox("root-project");
         let plugin = create_extension("test", sandbox.path());
@@ -91,7 +91,7 @@ mod migrate_turborepo {
         assert_snapshot!(fs::read_to_string(sandbox.path().join("moon.yml")).unwrap());
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn merges_with_existing_root_tasks() {
         let sandbox = create_sandbox("root-merge-existing");
         let plugin = create_extension("test", sandbox.path());
@@ -106,7 +106,7 @@ mod migrate_turborepo {
         assert_snapshot!(fs::read_to_string(sandbox.path().join(".moon/tasks/node.yml")).unwrap());
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn supports_no_pipeline() {
         let sandbox = create_sandbox("missing-pipeline");
         let plugin = create_extension("test", sandbox.path());
@@ -122,7 +122,7 @@ mod migrate_turborepo {
         assert!(!sandbox.path().join(".moon/tasks/node.yml").exists());
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "Unable to migrate task as package client does not exist.")]
     async fn errors_if_a_task_points_to_an_unknown_project() {
         let sandbox = create_sandbox("error-missing-project");
@@ -136,7 +136,7 @@ mod migrate_turborepo {
             .await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "Unable to migrate task as package client does not exist.")]
     async fn errors_if_a_dependson_points_to_an_unknown_project() {
         let sandbox = create_sandbox("error-missing-project-deps");
