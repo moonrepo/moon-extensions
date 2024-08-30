@@ -1,6 +1,6 @@
 use crate::format_virtual_path;
 use extism_pdk::debug;
-use moon_pdk::{fetch_url_bytes, AnyResult, VirtualPath};
+use moon_pdk::{fetch_bytes, AnyResult, VirtualPath};
 use std::fs;
 
 pub fn download_from_url<U: AsRef<str>, P: AsRef<VirtualPath>>(
@@ -17,7 +17,7 @@ pub fn download_from_url<U: AsRef<str>, P: AsRef<VirtualPath>>(
     let file_name = file_name.unwrap_or_else(|| &url[url.rfind('/').unwrap() + 1..]);
 
     // Fetch the bytes of the URL
-    let bytes = fetch_url_bytes(url)?;
+    let bytes = fetch_bytes(url)?;
 
     // Write the to the provided file
     let file = dir.join(file_name);

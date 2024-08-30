@@ -1,6 +1,8 @@
 // https://nx.dev/reference/nx-json
 // https://github.com/nrwl/nx/blob/master/packages/nx/schemas/nx-schema.json
 
+#![allow(dead_code)]
+
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use starbase_utils::json::JsonValue;
@@ -89,6 +91,7 @@ pub struct NxWorkspaceLayout {
 #[serde(rename_all = "camelCase")]
 pub struct NxJson {
     pub affected: Option<NxAffected>,
+    pub default_base: Option<String>,
     pub named_inputs: Option<NxNamedInputs>,
     pub target_defaults: Option<FxHashMap<String, NxTargetOptions>>,
     pub workspace_layout: Option<NxWorkspaceLayout>,

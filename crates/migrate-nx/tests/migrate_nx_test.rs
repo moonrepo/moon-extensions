@@ -5,15 +5,17 @@ use std::fs;
 mod migrate_nx {
     use super::*;
 
-    #[test]
-    fn converts_root_files() {
+    #[tokio::test(flavor = "multi_thread")]
+    async fn converts_root_files() {
         let sandbox = create_sandbox("root");
         let plugin = create_extension("test", sandbox.path());
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec![],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec![],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
 
         assert!(!sandbox.path().join("nx.json").exists());
         assert!(!sandbox.path().join("workspace.json").exists());
@@ -24,15 +26,17 @@ mod migrate_nx {
         assert_snapshot!(fs::read_to_string(sandbox.path().join(".moon/workspace.yml")).unwrap());
     }
 
-    #[test]
-    fn converts_nx_builtin_executors() {
+    #[tokio::test(flavor = "multi_thread")]
+    async fn converts_nx_builtin_executors() {
         let sandbox = create_sandbox("nx-executors");
         let plugin = create_extension("test", sandbox.path());
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec![],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec![],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
 
         assert!(!sandbox.path().join("project.json").exists());
         assert!(sandbox.path().join("moon.yml").exists());
@@ -43,15 +47,17 @@ mod migrate_nx {
     mod nx_json {
         use super::*;
 
-        #[test]
-        fn converts_named_inputs() {
+        #[tokio::test(flavor = "multi_thread")]
+        async fn converts_named_inputs() {
             let sandbox = create_sandbox("root-inputs");
             let plugin = create_extension("test", sandbox.path());
 
-            plugin.execute_extension(ExecuteExtensionInput {
-                args: vec![],
-                context: plugin.create_context(sandbox.path()),
-            });
+            plugin
+                .execute_extension(ExecuteExtensionInput {
+                    args: vec![],
+                    context: plugin.create_context(sandbox.path()),
+                })
+                .await;
 
             assert!(!sandbox.path().join("nx.json").exists());
             assert!(sandbox.path().join(".moon/tasks/node.yml").exists());
@@ -65,23 +71,25 @@ mod migrate_nx {
     mod workspace_projects {
         use super::*;
 
-        #[test]
-        fn uses_defaults() {
+        #[tokio::test(flavor = "multi_thread")]
+        async fn uses_defaults() {
             let sandbox = create_empty_sandbox();
             let plugin = create_extension("test", sandbox.path());
 
-            plugin.execute_extension(ExecuteExtensionInput {
-                args: vec![],
-                context: plugin.create_context(sandbox.path()),
-            });
+            plugin
+                .execute_extension(ExecuteExtensionInput {
+                    args: vec![],
+                    context: plugin.create_context(sandbox.path()),
+                })
+                .await;
 
             assert_snapshot!(
                 fs::read_to_string(sandbox.path().join(".moon/workspace.yml")).unwrap()
             );
         }
 
-        #[test]
-        fn inherits_layout() {
+        #[tokio::test(flavor = "multi_thread")]
+        async fn inherits_layout() {
             let sandbox = create_empty_sandbox();
             sandbox.create_file(
                 "nx.json",
@@ -96,10 +104,12 @@ mod migrate_nx {
 
             let plugin = create_extension("test", sandbox.path());
 
-            plugin.execute_extension(ExecuteExtensionInput {
-                args: vec![],
-                context: plugin.create_context(sandbox.path()),
-            });
+            plugin
+                .execute_extension(ExecuteExtensionInput {
+                    args: vec![],
+                    context: plugin.create_context(sandbox.path()),
+                })
+                .await;
 
             assert_snapshot!(
                 fs::read_to_string(sandbox.path().join(".moon/workspace.yml")).unwrap()
@@ -110,15 +120,17 @@ mod migrate_nx {
     mod projects {
         use super::*;
 
-        #[test]
-        fn converts_project_json() {
+        #[tokio::test(flavor = "multi_thread")]
+        async fn converts_project_json() {
             let sandbox = create_sandbox("projects");
             let plugin = create_extension("test", sandbox.path());
 
-            plugin.execute_extension(ExecuteExtensionInput {
-                args: vec![],
-                context: plugin.create_context(sandbox.path()),
-            });
+            plugin
+                .execute_extension(ExecuteExtensionInput {
+                    args: vec![],
+                    context: plugin.create_context(sandbox.path()),
+                })
+                .await;
 
             assert!(!sandbox.path().join("nx.json").exists());
             assert!(!sandbox.path().join("bar/project.json").exists());
@@ -133,17 +145,19 @@ mod migrate_nx {
             assert_snapshot!(fs::read_to_string(sandbox.path().join("foo/moon.yml")).unwrap());
         }
 
-        #[test]
-        fn converts_name_and_implicit_deps() {
+        #[tokio::test(flavor = "multi_thread")]
+        async fn converts_name_and_implicit_deps() {
             let sandbox = create_sandbox("project-name-deps");
             let plugin = create_extension("test", sandbox.path());
 
             dbg!(sandbox.path());
 
-            plugin.execute_extension(ExecuteExtensionInput {
-                args: vec![],
-                context: plugin.create_context(sandbox.path()),
-            });
+            plugin
+                .execute_extension(ExecuteExtensionInput {
+                    args: vec![],
+                    context: plugin.create_context(sandbox.path()),
+                })
+                .await;
 
             assert!(!sandbox.path().join("project.json").exists());
             assert!(sandbox.path().join("moon.yml").exists());
@@ -151,15 +165,17 @@ mod migrate_nx {
             assert_snapshot!(fs::read_to_string(sandbox.path().join("moon.yml")).unwrap());
         }
 
-        #[test]
-        fn converts_type_and_tags() {
+        #[tokio::test(flavor = "multi_thread")]
+        async fn converts_type_and_tags() {
             let sandbox = create_sandbox("project-type-tags");
             let plugin = create_extension("test", sandbox.path());
 
-            plugin.execute_extension(ExecuteExtensionInput {
-                args: vec![],
-                context: plugin.create_context(sandbox.path()),
-            });
+            plugin
+                .execute_extension(ExecuteExtensionInput {
+                    args: vec![],
+                    context: plugin.create_context(sandbox.path()),
+                })
+                .await;
 
             assert!(!sandbox.path().join("app/project.json").exists());
             assert!(!sandbox.path().join("lib/project.json").exists());
@@ -170,15 +186,17 @@ mod migrate_nx {
             assert_snapshot!(fs::read_to_string(sandbox.path().join("lib/moon.yml")).unwrap());
         }
 
-        #[test]
-        fn converts_named_inputs() {
+        #[tokio::test(flavor = "multi_thread")]
+        async fn converts_named_inputs() {
             let sandbox = create_sandbox("project-inputs");
             let plugin = create_extension("test", sandbox.path());
 
-            plugin.execute_extension(ExecuteExtensionInput {
-                args: vec![],
-                context: plugin.create_context(sandbox.path()),
-            });
+            plugin
+                .execute_extension(ExecuteExtensionInput {
+                    args: vec![],
+                    context: plugin.create_context(sandbox.path()),
+                })
+                .await;
 
             assert!(!sandbox.path().join("project.json").exists());
             assert!(sandbox.path().join("moon.yml").exists());
@@ -186,15 +204,17 @@ mod migrate_nx {
             assert_snapshot!(fs::read_to_string(sandbox.path().join("moon.yml")).unwrap());
         }
 
-        #[test]
-        fn converts_targets() {
+        #[tokio::test(flavor = "multi_thread")]
+        async fn converts_targets() {
             let sandbox = create_sandbox("project-targets");
             let plugin = create_extension("test", sandbox.path());
 
-            plugin.execute_extension(ExecuteExtensionInput {
-                args: vec![],
-                context: plugin.create_context(sandbox.path()),
-            });
+            plugin
+                .execute_extension(ExecuteExtensionInput {
+                    args: vec![],
+                    context: plugin.create_context(sandbox.path()),
+                })
+                .await;
 
             assert!(!sandbox.path().join("project.json").exists());
             assert!(sandbox.path().join("moon.yml").exists());

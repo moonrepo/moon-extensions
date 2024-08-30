@@ -5,104 +5,116 @@ use std::fs;
 mod download {
     use super::*;
 
-    #[test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "the following required arguments were not provided")]
-    fn errors_if_no_args() {
+    async fn errors_if_no_args() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec![],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec![],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
     }
 
-    #[test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "A valid URL is required for downloading.")]
-    fn errors_if_not_a_url() {
+    async fn errors_if_not_a_url() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec!["--url".into(), "invalid".into()],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec!["--url".into(), "invalid".into()],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
     }
 
-    #[test]
+    #[tokio::test(flavor = "multi_thread")]
     #[should_panic(expected = "must be a directory, found a file")]
-    fn errors_if_dest_is_a_file() {
+    async fn errors_if_dest_is_a_file() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
 
         sandbox.create_file("dest", "file");
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec![
-                "--url".into(),
-                "https://raw.githubusercontent.com/moonrepo/moon/master/README.md".into(),
-                "--dest".into(),
-                "./dest".into(),
-            ],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec![
+                    "--url".into(),
+                    "https://raw.githubusercontent.com/moonrepo/moon/master/README.md".into(),
+                    "--dest".into(),
+                    "./dest".into(),
+                ],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
     }
 
-    #[test]
-    fn downloads_file() {
+    #[tokio::test(flavor = "multi_thread")]
+    async fn downloads_file() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec![
-                "--url".into(),
-                "https://raw.githubusercontent.com/moonrepo/moon/master/README.md".into(),
-                "--dest".into(),
-                ".".into(),
-            ],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec![
+                    "--url".into(),
+                    "https://raw.githubusercontent.com/moonrepo/moon/master/README.md".into(),
+                    "--dest".into(),
+                    ".".into(),
+                ],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
 
         let file = sandbox.path().join("README.md");
 
         assert!(file.exists());
-        assert_eq!(fs::metadata(file).unwrap().len(), 3891);
+        assert_eq!(fs::metadata(file).unwrap().len(), 4107);
     }
 
-    #[test]
-    fn downloads_file_to_subdir() {
+    #[tokio::test(flavor = "multi_thread")]
+    async fn downloads_file_to_subdir() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec![
-                "--url".into(),
-                "https://raw.githubusercontent.com/moonrepo/moon/master/README.md".into(),
-                "--dest".into(),
-                "./sub/dir".into(),
-            ],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec![
+                    "--url".into(),
+                    "https://raw.githubusercontent.com/moonrepo/moon/master/README.md".into(),
+                    "--dest".into(),
+                    "./sub/dir".into(),
+                ],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
 
         assert!(sandbox.path().join("sub/dir/README.md").exists());
     }
 
-    #[test]
-    fn downloads_file_with_custom_name() {
+    #[tokio::test(flavor = "multi_thread")]
+    async fn downloads_file_with_custom_name() {
         let sandbox = create_empty_sandbox();
         let plugin = create_extension("test", sandbox.path());
 
-        plugin.execute_extension(ExecuteExtensionInput {
-            args: vec![
-                "--url".into(),
-                "https://raw.githubusercontent.com/moonrepo/moon/master/README.md".into(),
-                "--dest".into(),
-                "./sub/dir".into(),
-                "--name".into(),
-                "moon.md".into(),
-            ],
-            context: plugin.create_context(sandbox.path()),
-        });
+        plugin
+            .execute_extension(ExecuteExtensionInput {
+                args: vec![
+                    "--url".into(),
+                    "https://raw.githubusercontent.com/moonrepo/moon/master/README.md".into(),
+                    "--dest".into(),
+                    "./sub/dir".into(),
+                    "--name".into(),
+                    "moon.md".into(),
+                ],
+                context: plugin.create_context(sandbox.path()),
+            })
+            .await;
 
         assert!(sandbox.path().join("sub/dir/moon.md").exists());
     }

@@ -1,3 +1,12 @@
+# Changelog
+
+## Unreleased
+
+#### 🚀 Updates
+
+- Added support for `interactive` task option.
+- Updated dependencies.
+
 ## 0.1.2
 
 #### ⚙️ Internal
