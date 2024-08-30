@@ -4,11 +4,11 @@ members = ["crates/*"]
 
 [workspace.dependencies]
 extism-pdk = "1.2.1"
-moon_common = "0.0.8"
-moon_config = "0.0.10"
-moon_pdk = "0.0.9"
-moon_pdk_test_utils = "0.0.10"
-moon_target = "0.0.7"
+# moon_common = "0.0.8"
+# moon_config = "0.0.10"
+# moon_pdk = "0.0.9"
+# moon_pdk_test_utils = "0.0.10"
+# moon_target = "0.0.7"
 rustc-hash = "2.0.0"
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
@@ -17,11 +17,11 @@ starbase_utils = { version = "0.8.7", default-features = false }
 starbase_sandbox = "0.7.2"
 tokio = { version = "1.39.2", features = ["full"] }
 
-# moon_common = { path = "../moon/nextgen/common" }
-# moon_config = { path = "../moon/nextgen/config" }
-# moon_pdk = { path = "../moon/nextgen/pdk" }
-# moon_pdk_test_utils = { path = "../moon/nextgen/pdk-test-utils" }
-# moon_target = { path = "../moon/nextgen/target" }
+moon_common = { path = "../moon/crates/common" }
+moon_config = { path = "../moon/crates/config" }
+moon_pdk = { path = "../moon/crates/pdk" }
+moon_pdk_test_utils = { path = "../moon/crates/pdk-test-utils" }
+moon_target = { path = "../moon/crates/target" }
 
 [profile.release]
 codegen-units = 1

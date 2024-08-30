@@ -11,6 +11,18 @@ extern "ExtismHost" {
     fn to_virtual_path(path: String) -> String;
 }
 
+#[plugin_fn]
+pub fn register_extension(
+    Json(_): Json<ExtensionMetadataInput>,
+) -> FnResult<Json<ExtensionMetadataOutput>> {
+    Ok(Json(ExtensionMetadataOutput {
+        name: "Unpack".into(),
+        description: Some("Unpack an archive into the provided destination.".into()),
+        plugin_version: env!("CARGO_PKG_VERSION").into(),
+        config_schema: None,
+    }))
+}
+
 #[derive(Args)]
 pub struct UnpackExtensionArgs {
     #[arg(long, short = 's', required = true)]
