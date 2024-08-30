@@ -1767,6 +1767,8 @@ dependencies = [
 [[package]]
 name = "moon_common"
 version = "0.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "854b7e24a2c03b9136d2d1297eabc0b8222b1ed9d1606b12900233987a9ca902"
 dependencies = [
  "dirs 5.0.1",
  "miette",
@@ -1782,6 +1784,8 @@ dependencies = [
 [[package]]
 name = "moon_config"
 version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "219ffb426909e12d7c69a29d4522121cddb81ac1e4b4dfeaa6bf25afedbeabe7"
 dependencies = [
  "indexmap 2.5.0",
  "miette",
@@ -1863,7 +1867,9 @@ dependencies = [
 
 [[package]]
 name = "moon_pdk"
-version = "0.0.9"
+version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2806f0abed0dc802ce6170326112265181f117a44b47bf900d9daa48b0dc341"
 dependencies = [
  "clap",
  "extism-pdk",
@@ -1874,7 +1880,9 @@ dependencies = [
 
 [[package]]
 name = "moon_pdk_api"
-version = "0.0.9"
+version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "81f1e3ebaa9cd50fac8b5010b1165c628a40cce16e2690604f4d9b57e912e594"
 dependencies = [
  "moon_common",
  "moon_config",
@@ -1886,7 +1894,9 @@ dependencies = [
 
 [[package]]
 name = "moon_pdk_test_utils"
-version = "0.0.10"
+version = "0.0.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4c76c678b58b23ad01460ef4b56e5518ab10f6ee5c2e8e773408c401204f6aa"
 dependencies = [
  "extism",
  "moon_pdk_api",
@@ -1898,6 +1908,8 @@ dependencies = [
 [[package]]
 name = "moon_target"
 version = "0.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c1a34384f1819ffdd66db597eadbc5eaf06ce1807fb40e4475545c10203fc07"
 dependencies = [
  "miette",
  "moon_common",
@@ -3128,9 +3140,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.39.3"
+version = "1.40.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9babc99b9923bfa4804bd74722ff02c0381021eafa4db9949217e3be8e84fff5"
+checksum = "e2b070231665d27ad9ec9b8df639893f46727666c6767db40317fbe920a5d998"
 dependencies = [
  "backtrace",
  "bytes",
