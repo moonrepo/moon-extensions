@@ -2,6 +2,7 @@ use crate::nx_json::*;
 use crate::nx_project_json::*;
 use moon_common::Id;
 use moon_config::FilePath;
+use moon_config::PartialProjectMetadataConfig;
 use moon_config::PortablePath;
 use moon_config::TaskOptionEnvFile;
 use moon_config::{
@@ -71,14 +72,15 @@ impl NxMigrator {
     }
 
     pub fn migrate_root_config(&mut self, nx_json: NxJson) -> AnyResult<()> {
-        if let Some(affected) = nx_json.affected {
-            if let Some(default_branch) = affected.default_base {
-                self.inner
-                    .load_workspace_config()?
-                    .vcs
-                    .get_or_insert(PartialVcsConfig::default())
-                    .default_branch = Some(default_branch);
-            }
+        if let Some(default_branch) = nx_json
+            .default_base
+            .or_else(|| nx_json.affected.and_then(|aff| aff.default_base))
+        {
+            self.inner
+                .load_workspace_config()?
+                .vcs
+                .get_or_insert(PartialVcsConfig::default())
+                .default_branch = Some(default_branch);
         }
 
         if let Some(named_inputs) = nx_json.named_inputs {
@@ -221,6 +223,15 @@ impl NxMigrator {
                     }
                 }
             }
+        }
+
+        if let Some(metadata) = project_json.metadata {
+            config
+                .project
+                .get_or_insert(PartialProjectMetadataConfig::default())
+                .metadata
+                .get_or_insert(Default::default())
+                .extend(metadata);
         }
 
         Ok(())

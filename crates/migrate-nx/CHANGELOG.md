@@ -4,6 +4,8 @@
 
 #### 🚀 Updates
 
+- Added support for `defaultBase` from `nx.json`.
+- Added support for `metadata` from `project.json`.
 - Updated dependencies.
 
 ## 0.0.5

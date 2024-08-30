@@ -3,11 +3,13 @@
 use crate::nx_json::{NxNamedInputs, NxTargetOptions};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
+use std::collections::HashMap;
 
 #[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NxProjectJson {
     pub implicit_dependencies: Option<Vec<String>>,
+    pub metadata: Option<HashMap<String, serde_json::Value>>,
     pub name: Option<String>,
     pub named_inputs: Option<NxNamedInputs>,
     pub project_type: Option<String>,

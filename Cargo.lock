@@ -1841,6 +1841,7 @@ dependencies = [
  "moon_target",
  "rustc-hash 2.0.0",
  "serde",
+ "serde_json",
  "starbase_sandbox",
  "starbase_utils",
  "tokio",

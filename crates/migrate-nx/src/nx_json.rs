@@ -91,6 +91,7 @@ pub struct NxWorkspaceLayout {
 #[serde(rename_all = "camelCase")]
 pub struct NxJson {
     pub affected: Option<NxAffected>,
+    pub default_base: Option<String>,
     pub named_inputs: Option<NxNamedInputs>,
     pub target_defaults: Option<FxHashMap<String, NxTargetOptions>>,
     pub workspace_layout: Option<NxWorkspaceLayout>,
