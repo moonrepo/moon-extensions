@@ -1,14 +1,11 @@
 use crate::nx_json::*;
 use crate::nx_project_json::*;
 use moon_common::Id;
-use moon_config::FilePath;
-use moon_config::PartialProjectMetadataConfig;
-use moon_config::PortablePath;
-use moon_config::TaskOptionEnvFile;
 use moon_config::{
-    InputPath, OutputPath, PartialProjectDependsOn, PartialTaskArgs, PartialTaskConfig,
-    PartialTaskDependency, PartialTaskOptionsConfig, PartialVcsConfig, PartialWorkspaceProjects,
-    PlatformType, ProjectType,
+    FilePath, InputPath, OutputPath, PartialProjectDependsOn, PartialProjectMetadataConfig,
+    PartialTaskArgs, PartialTaskConfig, PartialTaskDependency, PartialTaskOptionsConfig,
+    PartialVcsConfig, PartialWorkspaceProjects, PlatformType, PortablePath, ProjectType,
+    TaskOptionEnvFile,
 };
 use moon_extension_common::migrator::*;
 use moon_pdk::{map_miette_error, AnyResult, MoonContext};
