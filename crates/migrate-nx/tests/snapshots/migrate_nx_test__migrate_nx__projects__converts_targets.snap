@@ -8,12 +8,12 @@ tasks:
   build:
     command: esbuild
     args:
+    - --main
+    - app
     - --tsConfig
     - $workspaceRoot/app/tsconfig.app.json
     - --outputPath
     - $workspaceRoot/dist/app
-    - --main
-    - app
   create-script:
     command: mkdir -p apps/frontend/scripts && touch apps/frontend/scripts/my-script.sh && chmod +x apps/frontend/scripts/my-script.sh
     platform: system
@@ -55,7 +55,6 @@ tasks:
   test:
     command: jest
     args:
+    - --passWithNoTests
     - --jestConfig
     - $workspaceRoot/libs/my-lib/jest.config.ts
-    - --passWithNoTests
-

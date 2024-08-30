@@ -328,6 +328,13 @@ impl TurboMigrator {
             }
         }
 
+        if turbo_task.interactive == Some(true) {
+            config
+                .options
+                .get_or_insert(PartialTaskOptionsConfig::default())
+                .interactive = turbo_task.interactive;
+        }
+
         if turbo_task.persistent == Some(true) {
             config.local = turbo_task.persistent;
         }

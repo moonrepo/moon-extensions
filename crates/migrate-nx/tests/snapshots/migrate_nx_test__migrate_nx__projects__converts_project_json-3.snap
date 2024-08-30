@@ -12,8 +12,8 @@ tasks:
     args:
     - --cypressConfig
     - $workspaceRoot/foo/cypress.config.ts
-    - --parallel
     - --no-debug
+    - --parallel
   e2e.dev:
     extends: e2e
     args:
@@ -24,4 +24,3 @@ tasks:
     args:
     - --baseUrl
     - https://some-internal-url.example.com
-

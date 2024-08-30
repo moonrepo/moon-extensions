@@ -10,9 +10,9 @@ tasks:
   run-env:
     command: echo 'foo'
     env:
-      BAZ: 'true'
       BAR: abc
       FOO: '123'
+      BAZ: 'true'
     platform: system
   run-env-file:
     command: echo 'foo'
@@ -39,4 +39,3 @@ tasks:
     outputs:
     - dist
     - docs
-

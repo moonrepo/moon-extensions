@@ -14,10 +14,10 @@ tasks:
   build:
     command: js tsc
     args:
-    - --tsConfig
-    - $workspaceRoot/baz/tsconfig.lib.json
     - --main
     - $workspaceRoot/baz/src/main.ts
+    - --tsConfig
+    - $workspaceRoot/baz/tsconfig.lib.json
     deps:
     - ^:build
     inputs:
@@ -29,4 +29,3 @@ tasks:
     args:
     - --tsConfig
     - $workspaceRoot/baz/tsconfig-prod.lib.json
-
