@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+#### 🚀 Updates
+
+- Added `register_extension` API.
+
 ## 0.0.6
 
 #### 🚀 Updates
