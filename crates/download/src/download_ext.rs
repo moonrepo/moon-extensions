@@ -9,6 +9,18 @@ extern "ExtismHost" {
     fn to_virtual_path(path: String) -> String;
 }
 
+#[plugin_fn]
+pub fn register_extension(
+    Json(_): Json<ExtensionMetadataInput>,
+) -> FnResult<Json<ExtensionMetadataOutput>> {
+    Ok(Json(ExtensionMetadataOutput {
+        name: "Download".into(),
+        description: Some("Download a file from a URL into the current working directory.".into()),
+        plugin_version: env!("CARGO_PKG_VERSION").into(),
+        config_schema: None,
+    }))
+}
+
 #[derive(Args)]
 pub struct DownloadExtensionArgs {
     #[arg(long, short = 'u', required = true)]

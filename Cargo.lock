@@ -1147,7 +1147,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
 dependencies = [
  "fallible-iterator",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "stable_deref_trait",
 ]
 
@@ -1199,7 +1199,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "http",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "slab",
  "tokio",
  "tokio-util",
@@ -1425,9 +1425,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.4.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93ead53efc7ea8ed3cfb0c79fc8023fbb782a5432b52830b6518941cebe6505c"
+checksum = "68b900aa2f7301e21c36462b170ee99994de34dff39a4a6a528e80e7376d07e5"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.5",
@@ -1787,7 +1787,7 @@ version = "0.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "219ffb426909e12d7c69a29d4522121cddb81ac1e4b4dfeaa6bf25afedbeabe7"
 dependencies = [
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "miette",
  "moon_common",
  "moon_target",
@@ -1867,9 +1867,9 @@ dependencies = [
 
 [[package]]
 name = "moon_pdk"
-version = "0.0.9"
+version = "0.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4084824e8ea5ecd9c63b1ce8b76043ef130e6a70cd06da9a5b1d2391f1ab4a6"
+checksum = "b2806f0abed0dc802ce6170326112265181f117a44b47bf900d9daa48b0dc341"
 dependencies = [
  "clap",
  "extism-pdk",
@@ -1880,9 +1880,9 @@ dependencies = [
 
 [[package]]
 name = "moon_pdk_api"
-version = "0.0.9"
+version = "0.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e125867bc9b986ae5880071fa2c59c54b3567cb341670ffd71684945a01b8a88"
+checksum = "81f1e3ebaa9cd50fac8b5010b1165c628a40cce16e2690604f4d9b57e912e594"
 dependencies = [
  "moon_common",
  "moon_config",
@@ -1894,9 +1894,9 @@ dependencies = [
 
 [[package]]
 name = "moon_pdk_test_utils"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89d3760aff453d7b71a8db547596a774b53e74f59342c7640e97cced65fefab1"
+checksum = "b4c76c678b58b23ad01460ef4b56e5518ab10f6ee5c2e8e773408c401204f6aa"
 dependencies = [
  "extism",
  "moon_pdk_api",
@@ -1977,7 +1977,7 @@ checksum = "a6a622008b6e321afc04970976f62ee297fdbaa6f95318ca343e3eebb9648441"
 dependencies = [
  "crc32fast",
  "hashbrown 0.14.5",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "memchr",
 ]
 
@@ -2621,7 +2621,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a27ae5ae2fb243bce05160f4983d7e258978843e5b9dbb21375c4311cec68300"
 dependencies = [
  "garde",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "miette",
  "schematic_macros",
  "schematic_types",
@@ -2653,7 +2653,7 @@ version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "653e1eacf66aa291a836204f0bbe8c2ae7adbc943b3e3ef8f4a2abfac77d12dd"
 dependencies = [
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "semver",
  "serde",
  "serde_json",
@@ -2730,7 +2730,7 @@ version = "1.0.127"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8043c06d9f82bd7271361ed64f415fe5e12a77fdb52e573e7f06a516dea329ad"
 dependencies = [
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "itoa",
  "memchr",
  "ryu",
@@ -2774,7 +2774,7 @@ version = "0.9.34+deprecated"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a8b1a1a2ebf674015cc02edccce75287f1a0130d394307b36743c2f5d504b47"
 dependencies = [
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "itoa",
  "ryu",
  "serde",
@@ -3140,9 +3140,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.39.3"
+version = "1.40.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9babc99b9923bfa4804bd74722ff02c0381021eafa4db9949217e3be8e84fff5"
+checksum = "e2b070231665d27ad9ec9b8df639893f46727666c6767db40317fbe920a5d998"
 dependencies = [
  "backtrace",
  "bytes",
@@ -3228,7 +3228,7 @@ version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a8534fd7f78b5405e860340ad6575217ce99f38d4d5c8f2442cb5ecb50090e1"
 dependencies = [
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "toml_datetime",
  "winnow 0.5.40",
 ]
@@ -3239,7 +3239,7 @@ version = "0.22.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "583c44c02ad26b0c3f3066fe629275e50627026c51ac2e595cca4c230ce1ce1d"
 dependencies = [
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "serde",
  "serde_spanned",
  "toml_datetime",
@@ -3491,13 +3491,14 @@ dependencies = [
 
 [[package]]
 name = "warpgate"
-version = "0.17.0"
+version = "0.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fb9948cc8854946cd87aa6a1ee8e99fc4fde22c8f13c9facb0f229abd169185"
+checksum = "74503571955128c578ca6721426c6013419861ec4b7bb7d0dd8abfce2e43749d"
 dependencies = [
  "extism",
  "miette",
  "once_cell",
+ "regalloc2",
  "regex",
  "reqwest",
  "scc",
@@ -3681,7 +3682,7 @@ version = "0.118.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77f1154f1ab868e2a01d9834a805faca7bf8b50d041b4ca714d005d0dab1c50c"
 dependencies = [
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "semver",
 ]
 
@@ -3692,7 +3693,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9dbe55c8f9d0dbd25d9447a5a889ff90c0cc3feaa7395310d3d826b2c703eaab"
 dependencies = [
  "bitflags",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "semver",
 ]
 
@@ -3719,7 +3720,7 @@ dependencies = [
  "cfg-if",
  "encoding_rs",
  "fxprof-processed-profile",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "libc",
  "log",
  "object 0.32.2",
@@ -3845,7 +3846,7 @@ dependencies = [
  "anyhow",
  "cranelift-entity",
  "gimli 0.28.1",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "log",
  "object 0.32.2",
  "serde",
@@ -3934,7 +3935,7 @@ dependencies = [
  "cc",
  "cfg-if",
  "encoding_rs",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "libc",
  "log",
  "mach",
@@ -4038,7 +4039,7 @@ checksum = "af5fbb1adaadad70271fe18a3f938741edb2b5178bf2fc164ab20544018626b8"
 dependencies = [
  "anyhow",
  "heck 0.4.1",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "wit-parser",
 ]
 
@@ -4425,7 +4426,7 @@ checksum = "316b36a9f0005f5aa4b03c39bc3728d045df136f8c13a73b7db4510dec725e08"
 dependencies = [
  "anyhow",
  "id-arena",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "log",
  "semver",
  "serde",
@@ -4510,7 +4511,7 @@ dependencies = [
  "crossbeam-utils",
  "displaydoc",
  "flate2",
- "indexmap 2.4.0",
+ "indexmap 2.5.0",
  "memchr",
  "thiserror",
  "zopfli",
