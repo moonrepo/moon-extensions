@@ -1,5 +1,3 @@
 # moonrepo extensions
 
-A monorepo of built-in moon extensions.
-
-Learn more: https://moonrepo.dev/docs/guides/extensions
+Extensions have moved to the plugins repository: https://github.com/moonrepo/plugins
